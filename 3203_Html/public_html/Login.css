@@ -21,7 +21,6 @@ and open the template in the editor.
 html, body{
   width: 100%;
   height: 100%;
-  background: url(https://subtlepatterns.com/patterns/sativa.png) repeat fixed;
   font-family: 'Open Sans', sans-serif;
   font-weight: 200;
 }
@@ -40,43 +39,21 @@ html, body{
   position: relative;
   width: 100%;
   display: block;
-  background: #FF7052;
+  background: #4682B4;
   padding: 15px;
   color: #fff;
   font-size: 20px;
-  
-  &:after{
-    content: "";
-    background-image: url(http://simpleicon.com/wp-content/uploads/multy-user.png);
-    background-size: 100px 100px;
-    background-repeat: no-repeat;
-    background-position: 152px -16px;
-    opacity: 0.06;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    position: absolute;
-  }
 }
 
 .input{
   position: relative;
   width: 90%;
   margin: 15px auto;
-  
-  span{
-    position: absolute;
-    display: block;
-    color: darken(#EDEDED, 10%);
-    left: 10px;
-    top: 8px;
-    font-size: 20px;
-  }
+}
   
   input{
     width: 100%;
-    padding: 10px 5px 10px 40px;
+    padding: 10px 10px;
     display: block;
     border: 1px solid #EDEDED;
     border-radius: 4px;
@@ -84,31 +61,55 @@ html, body{
     color: darken(#EDEDED, 30%);
     
     &:focus{
-      padding: 10px 5px 10px 10px;
+/*      padding: 10px 5px 10px 10px;*/
       outline: 0;
-      border-color: #FF7052;
+      border-color: #4682B4;
     }
   }
+
+  
+.buttonfx {
+	display: inline-block;
+	padding: .75rem 1.25rem;
+	border-radius: 10rem;
+	color: #fff;
+	text-transform: uppercase;
+	font-size: 1rem;
+	letter-spacing: .15rem;
+	transition: all .3s;
+	position: relative;
+	overflow: hidden;
+	z-index: 1;
+	&:after {
+		content: '';
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: #6495ED;
+		border-radius: 10rem;
+		z-index: -2;
+	}
+	&:before {
+		content: '';
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: 0%;
+		height: 100%;
+		background-color: #4682B4;
+		transition: all .3s;
+		border-radius: 10rem;
+		z-index: -1;
+	}
+	&:hover {
+		color: #fff;
+                cursor:pointer;
+		&:before {
+			width: 100%;
+		}
+	}
 }
 
-.submit{
-  width: 45px;
-  height: 45px;
-  display: block;
-  margin: 0 auto -15px auto;
-  background: #fff;
-  border-radius: 100%;
-  border: 1px solid #FF7052;
-  color: #FF7052;
-  font-size: 24px;
-  cursor: pointer;
-  box-shadow: 0px 0px 0px 7px #fff;
-  transition: 0.2s ease-out;
-  
-  &:hover, &:focus{
-    background: #FF7052;
-    color: #fff;
-    outline: 0;
-  }
-}
 
