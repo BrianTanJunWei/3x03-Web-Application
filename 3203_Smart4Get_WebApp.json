@@ -1,0 +1,27 @@
+{
+  "version": "2.0.6",
+  "summary": {
+    "title": "3203_Smart4Get_WebApp",
+    "owner": "Brian Tan",
+    "description": "Web application for Smart4Get",
+    "id": 0
+  },
+  "detail": {
+    "contributors": [],
+    "diagrams": [
+      {
+        "id": 0,
+        "title": "New STRIDE diagram",
+        "diagramType": "STRIDE",
+        "placeholder": "New STRIDE diagram description",
+        "thumbnail": "./public/content/images/thumbnail.stride.jpg",
+        "version": "2.0.6",
+        "cells": [],
+        "description": "3203_Smart4Get_WebApp"
+      }
+    ],
+    "diagramTop": 1,
+    "reviewer": "",
+    "threatTop": 0
+  }
+}
