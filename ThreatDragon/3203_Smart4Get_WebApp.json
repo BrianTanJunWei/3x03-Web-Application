@@ -19,8 +19,28 @@
         "cells": [
           {
             "position": {
+              "x": 619.9999999999995,
+              "y": 90.00000000000074
+            },
+            "size": {
+              "width": 770,
+              "height": 400
+            },
+            "shape": "trust-boundary-box",
+            "id": "161d9323-1b57-4306-807e-579bd5c113ab",
+            "zIndex": -1,
+            "data": {
+              "type": "tm.BoundaryBox",
+              "name": "Trust Boundary",
+              "description": "",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false
+            }
+          },
+          {
+            "position": {
               "x": 600,
-              "y": 270.0000000000002
+              "y": 250.00000000000006
             },
             "size": {
               "width": 220,
@@ -48,13 +68,27 @@
               "reasonOutOfScope": "",
               "privilegeLevel": "",
               "hasOpenThreats": false,
-              "threats": []
+              "threats": [
+                {
+                  "id": "e25afcbc-6939-4d9f-9a91-20b7796535f2",
+                  "title": "Cross-Site Scripting (XSS)",
+                  "status": "Mitigated",
+                  "severity": "Low",
+                  "type": "Spoofing",
+                  "description": "Cross-Site Scripting (XSS) is a type of security vulnerability that falls under the \"Spoofing\" category in STRIDE. This threat occurs when an attacker is able to inject malicious scripts, typically written in JavaScript, into web content that is then served to other users through a web application. The injected scripts run in the context of the user's session, making it appear as if they are part of the legitimate application. As a result, users are tricked into executing malicious code, potentially leading to various security risks.",
+                  "mitigation": "Mitigating XSS threats involves implementing security measures such as:\n\nInput Validation: Validate and sanitize user inputs to prevent the injection of malicious scripts.\nOutput Encoding: Encode user-generated content before rendering it in web pages to prevent script execution.\nContent Security Policy (CSP): Implement CSP headers to restrict the execution of scripts from unauthorized sources.\nSecurity Awareness: Train developers and users to recognize and avoid XSS vulnerabilities.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 2,
+                  "score": "6.1"
+                }
+              ]
             }
           },
           {
             "position": {
-              "x": 860,
-              "y": 290.00000000000006
+              "x": 880,
+              "y": 250.00000000000006
             },
             "size": {
               "width": 180,
@@ -88,7 +122,7 @@
           {
             "position": {
               "x": 270,
-              "y": 230
+              "y": 160
             },
             "size": {
               "width": 112.5,
@@ -122,7 +156,7 @@
           {
             "position": {
               "x": 270,
-              "y": 310
+              "y": 270.0000000000002
             },
             "size": {
               "width": 112.5,
@@ -228,7 +262,12 @@
             "target": {
               "cell": "5c6519f0-05b9-4304-ae99-db858ccb7f02"
             },
-            "vertices": []
+            "vertices": [
+              {
+                "x": 510,
+                "y": 210
+              }
+            ]
           },
           {
             "shape": "flow",
@@ -256,7 +295,7 @@
               "isBidirectional": false,
               "reasonOutOfScope": "",
               "protocol": "",
-              "isEncrypted": false,
+              "isEncrypted": true,
               "isPublicNetwork": false,
               "hasOpenThreats": false,
               "threats": []
@@ -271,7 +310,16 @@
             "target": {
               "cell": "5c6519f0-05b9-4304-ae99-db858ccb7f02"
             },
-            "vertices": []
+            "vertices": [
+              {
+                "x": 490,
+                "y": 350
+              },
+              {
+                "x": 510,
+                "y": 350
+              }
+            ]
           },
           {
             "shape": "flow",
@@ -293,46 +341,7 @@
             "connector": "smooth",
             "data": {
               "type": "tm.Flow",
-              "name": "Data Flow",
-              "description": "",
-              "outOfScope": false,
-              "isBidirectional": false,
-              "reasonOutOfScope": "",
-              "protocol": "",
-              "isEncrypted": false,
-              "isPublicNetwork": false,
-              "hasOpenThreats": false,
-              "threats": []
-            },
-            "id": "7896f318-afb7-4a84-876f-7839e487ce77",
-            "source": {
-              "cell": "5c6519f0-05b9-4304-ae99-db858ccb7f02"
-            },
-            "target": {
-              "cell": "39fb7208-3556-423f-8068-ac04cf24f86d"
-            }
-          },
-          {
-            "shape": "flow",
-            "attrs": {
-              "line": {
-                "stroke": "#333333",
-                "targetMarker": {
-                  "name": "block"
-                },
-                "sourceMarker": {
-                  "name": ""
-                },
-                "strokeDasharray": null
-              }
-            },
-            "width": 200,
-            "height": 100,
-            "zIndex": 10,
-            "connector": "smooth",
-            "data": {
-              "type": "tm.Flow",
-              "name": "Data Flow",
+              "name": "Database Request",
               "description": "",
               "outOfScope": false,
               "isBidirectional": false,
@@ -344,12 +353,21 @@
               "threats": []
             },
             "id": "141500db-d12c-474b-8399-ecece33ef164",
+            "labels": [
+              "Database Request"
+            ],
             "source": {
               "cell": "39fb7208-3556-423f-8068-ac04cf24f86d"
             },
             "target": {
               "cell": "8b5f571c-b7d1-4986-b67c-087cf7add5c7"
-            }
+            },
+            "vertices": [
+              {
+                "x": 1130,
+                "y": 290
+              }
+            ]
           },
           {
             "shape": "flow",
@@ -377,8 +395,8 @@
               "isBidirectional": false,
               "reasonOutOfScope": "",
               "protocol": "",
-              "isEncrypted": false,
-              "isPublicNetwork": false,
+              "isEncrypted": true,
+              "isPublicNetwork": true,
               "hasOpenThreats": false,
               "threats": []
             },
@@ -393,6 +411,10 @@
               "cell": "5c6519f0-05b9-4304-ae99-db858ccb7f02"
             },
             "vertices": [
+              {
+                "x": 490,
+                "y": 390
+              },
               {
                 "x": 540,
                 "y": 380
@@ -448,9 +470,289 @@
             ]
           },
           {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Http Response",
+              "description": "",
+              "outOfScope": false,
+              "isBidirectional": false,
+              "reasonOutOfScope": "",
+              "protocol": "",
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "hasOpenThreats": false,
+              "threats": []
+            },
+            "id": "46516327-efce-4bdb-b4e2-8db4da31fa81",
+            "labels": [
+              "Http Response"
+            ],
+            "source": {
+              "cell": "5c6519f0-05b9-4304-ae99-db858ccb7f02"
+            },
+            "target": {
+              "cell": "d89637ce-0397-415d-9305-dda712dfaf76"
+            },
+            "vertices": [
+              {
+                "x": 540,
+                "y": 327
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Http Response\n",
+              "description": "",
+              "outOfScope": false,
+              "isBidirectional": false,
+              "reasonOutOfScope": "",
+              "protocol": "",
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "hasOpenThreats": false,
+              "threats": []
+            },
+            "id": "5898ed7a-6cb6-4ca8-a511-4dd28e162c67",
+            "labels": [
+              "Http Response\n"
+            ],
+            "source": {
+              "cell": "5c6519f0-05b9-4304-ae99-db858ccb7f02"
+            },
+            "target": {
+              "cell": "7778216d-a664-40df-909a-55bbd647702c"
+            },
+            "vertices": [
+              {
+                "x": 510,
+                "y": 260
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Database Response",
+              "description": "",
+              "outOfScope": false,
+              "isBidirectional": false,
+              "reasonOutOfScope": "",
+              "protocol": "",
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "hasOpenThreats": false,
+              "threats": []
+            },
+            "id": "b5b67388-8c79-41a7-91eb-59b4b48cf117",
+            "labels": [
+              "Database Response"
+            ],
+            "source": {
+              "cell": "8b5f571c-b7d1-4986-b67c-087cf7add5c7"
+            },
+            "target": {
+              "cell": "39fb7208-3556-423f-8068-ac04cf24f86d"
+            },
+            "vertices": [
+              {
+                "x": 1140,
+                "y": 390
+              }
+            ]
+          },
+          {
+            "shape": "trust-broundary-curve",
+            "attrs": {
+              "line": {
+                "targetMarker": "",
+                "strokeDasharray": "7 5",
+                "sourceMarker": ""
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Boundary",
+              "name": "",
+              "description": "",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false
+            },
+            "id": "b6e0a3b2-1073-4542-a84f-98778ac59177",
+            "source": {
+              "x": 390,
+              "y": 60
+            },
+            "target": {
+              "x": 500,
+              "y": 500
+            },
+            "vertices": [
+              {
+                "x": 600,
+                "y": 290
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Http",
+              "description": "",
+              "outOfScope": false,
+              "isBidirectional": false,
+              "reasonOutOfScope": "",
+              "protocol": "",
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "hasOpenThreats": false,
+              "threats": []
+            },
+            "id": "7896f318-afb7-4a84-876f-7839e487ce77",
+            "source": {
+              "cell": "5c6519f0-05b9-4304-ae99-db858ccb7f02"
+            },
+            "target": {
+              "cell": "39fb7208-3556-423f-8068-ac04cf24f86d"
+            },
+            "vertices": [
+              {
+                "x": 850,
+                "y": 290
+              }
+            ],
+            "labels": [
+              "Http"
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Http",
+              "description": "",
+              "outOfScope": false,
+              "isBidirectional": false,
+              "reasonOutOfScope": "",
+              "protocol": "",
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "hasOpenThreats": false,
+              "threats": []
+            },
+            "id": "0daf64d7-6703-42bd-a53d-d5807bcee433",
+            "source": {
+              "cell": "39fb7208-3556-423f-8068-ac04cf24f86d"
+            },
+            "target": {
+              "cell": "5c6519f0-05b9-4304-ae99-db858ccb7f02"
+            },
+            "vertices": [
+              {
+                "x": 880,
+                "y": 360
+              },
+              {
+                "x": 800,
+                "y": 360
+              }
+            ],
+            "labels": [
+              "Http"
+            ]
+          },
+          {
             "position": {
-              "x": 1100,
-              "y": 330.00000000000006
+              "x": 1240,
+              "y": 300
             },
             "size": {
               "width": 120,
@@ -493,6 +795,6 @@
     ],
     "diagramTop": 1,
     "reviewer": "",
-    "threatTop": 0
+    "threatTop": 2
   }
 }
