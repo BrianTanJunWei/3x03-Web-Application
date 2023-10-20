@@ -1,4 +1,4 @@
 #inside docker container (jenkins) 326a81453f40
 python==3.11.2
-python3-pip==23.0.1
-python3-flask==2.2.2
+pip3==23.0.1
+flask==2.2.2
