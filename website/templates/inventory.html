@@ -12,9 +12,11 @@
 
   <!-- Iterate through the product catalog and display each product -->
   <div class="row">
-    {% for product in products %}
+    {% for product in user.products %}
       <!-- ... existing product card code ... -->
+      {{ product.data }}
     {% endfor %}
+
   </div>
 
   <!-- Add Product Modal -->
@@ -29,22 +31,22 @@
         </div>
         <div class="modal-body">
           <!-- Form to add a new product -->
-          <form id="addProductForm">
+          <form id="addProductForm" method="POST" action="{{ url_for('views.add_product') }}" enctype="multipart/form-data">
             <div class="form-group">
               <label for="productName">Product Name</label>
-              <input type="text" class="form-control" id="productName" required>
+              <input type="text" class="form-control" id="productName" name="name" required>
             </div>
             <div class="form-group">
               <label for="productDescription">Product Description</label>
-              <textarea class="form-control" id="productDescription"></textarea>
+              <textarea class="form-control" id="productDescription" name="description"></textarea>
             </div>
             <div class="form-group">
               <label for="productPrice">Product Price</label>
-              <input type="number" class="form-control" id="productPrice" required>
+              <input type="text" class="form-control" id="productPrice" name="price" required>
             </div>
             <div class="form-group">
-              <label for="productImageUrl">Product Image URL</label>
-              <input type="text" class="form-control" id="productImageUrl">
+              <label for="productImage">Product Image</label>
+              <input type="file" class="form-control-file" id="productImage" name="image">
             </div>
             <button type="submit" class="btn btn-primary">Add Product</button>
           </form>
@@ -53,43 +55,3 @@
     </div>
   </div>
 {% endblock %}
-<!-- Include jQuery and Bootstrap JS in your HTML -->
-<script src="https://code.jquery.com/jquery-3.6.4.slim.min.js" integrity="sha384-H4TZq27qCefg5z1n4p3JpXkyyJ2fCeTajKFXfIOFr8IqO3a3CjQQWayhQpDZxO1" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-e7GSk5B8iMMSlP1xMmeHYhJKPTIji1p4X7CtOg8WIz5Lm6IH9P2X4F+bpWfTEWqA" crossorigin="anonymous"></script>
-
-<script>
-  $(document).ready(function() {
-    // Handle form submission
-    $("#addProductForm").submit(function(event) {
-      event.preventDefault();
-      
-      // Get form data
-      var productName = $("#productName").val();
-      var productDescription = $("#productDescription").val();
-      var productPrice = $("#productPrice").val();
-      var productImageUrl = $("#productImageUrl").val();
-      
-      // You can use Ajax to send the data to the server (Flask endpoint)
-      // Example:
-      // $.ajax({
-      //   type: "POST",
-      //   url: "/add_product",
-      //   data: {
-      //     name: productName,
-      //     description: productDescription,
-      //     price: productPrice,
-      //     image_url: productImageUrl
-      //   },
-      //   success: function(response) {
-      //     // Handle success
-      //   },
-      //   error: function(error) {
-      //     // Handle error
-      //   }
-      // });
-
-      // Close the modal
-      $("#addProductModal").modal("hide");
-    });
-  });
-</script>

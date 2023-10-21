@@ -1,23 +1,38 @@
-{% extends 'customerBase.html' %}
+{% extends 'customerBase.html' %} 
 
-{% block title %}Catalog{% endblock %}
+{% block title %}Catalog{% endblock %} 
 
-{% block content %}
-  <h1>Catalog</h1>
+{%block content %}
 
-  <!-- Iterate through the product catalog and display each product -->
-  <div class="row">
-    {% for product in products %}
-      <!-- ... existing product card code ... -->
-      <li>
-        <a href="{{ url_for('view_product', product_id=product.id) }}">
-            {{ product.name }}
-        </a>
-    </li>
-    {% endfor %}
+<h1>Catalog</h1>
+
+<!-- Iterate through the product catalog and display each product -->
+<div class="row">
+  {% for product in products %}
+  <!-- ... existing product card code ... -->
+  <div class="col-lg-4 col-md-6 col-sm-12">
+    <div class="card">
+      <img src="data:image/jpeg;base64,{{ product.image }}" class="card-img-top" alt="{{ product.name }}">
+      <div class="card-body">
+        <h5 class="card-title">{{ product.name }}</h5>
+        <p class="card-text">{{ product.description }}</p>
+        <p class="card-text">${{ "%.2f"|format(product.price) }}</p>
+      </div>
+    </div>
   </div>
-  {% endblock %}
-<!-- Include jQuery and Bootstrap JS in your HTML -->
-<script src="https://code.jquery.com/jquery-3.6.4.slim.min.js" integrity="sha384-H4TZq27qCefg5z1n4p3JpXkyyJ2fCeTajKFXfIOFr8IqO3a3CjQQWayhQpDZxO1" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-e7GSk5B8iMMSlP1xMmeHYhJKPTIji1p4X7CtOg8WIz5Lm6IH9P2X4F+bpWfTEWqA" crossorigin="anonymous"></script>
+  {% endfor %}
+</div>
+{% endblock %}
 
+
+<!-- Include jQuery and Bootstrap JS in your HTML -->
+<script
+  src="https://code.jquery.com/jquery-3.6.4.slim.min.js"
+  integrity="sha384-H4TZq27qCefg5z1n4p3JpXkyyJ2fCeTajKFXfIOFr8IqO3a3CjQQWayhQpDZxO1"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+  integrity="sha384-e7GSk5B8iMMSlP1xMmeHYhJKPTIji1p4X7CtOg8WIz5Lm6IH9P2X4F+bpWfTEWqA"
+  crossorigin="anonymous"
+></script>

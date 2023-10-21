@@ -37,14 +37,17 @@ def add_product():
     name = request.form.get('name')
     description = request.form.get('description')
     price = request.form.get('price')
-    image_url = request.form.get('image_url')
+    image_file = request.files['image']
 
     # Create a new product
-    new_product = Product(name=name, description=description, price=price, image_url=image_url)
+    new_product = Product(name=name, description=description, price=price)
 
+    # Save the image
+    new_product.save_image(image_file)
+    
     # Add the new product to the database
     db.session.add(new_product)
     db.session.commit()
 
     # Redirect to the shop page or wherever you want
-    return redirect(url_for('views.catalog'))
+    return redirect(url_for('views.home'))
