@@ -8,7 +8,18 @@ views = Blueprint('views', __name__)
 @views.route('/')
 @login_required # prevents ppl from going to homepage without logging in
 def home():
-    return render_template("shop.html", user=current_user)
+    products = Product.query.all()
+    return render_template("catalog.html", user=current_user, products=products)
+
+@views.route('/product/<int:product_id>')
+def view_product(product_id):
+    product = Product.query.get(product_id)
+    return render_template('product.html', product=product)
+
+@views.route('/inventory')
+@login_required # prevents ppl from going to homepage without logging in
+def inventory():
+    return render_template("inventory.html", user=current_user)
 
 @views.route('/order')
 @login_required # prevents ppl from going to homepage without logging in
@@ -36,4 +47,4 @@ def add_product():
     db.session.commit()
 
     # Redirect to the shop page or wherever you want
-    return redirect(url_for('views.shop'))
+    return redirect(url_for('views.catalog'))
