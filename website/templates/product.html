@@ -7,10 +7,17 @@
 
   <!-- Iterate through the product catalog and display each product -->
   <div class="row">
-    <p><strong>Description:</strong> {{ product.description }}</p>
-    <p><strong>Price:</strong> ${{ product.price }}</p>
-    <a href="{{ url_for('display_products') }}">Back to Products</a>
+    <img src="data:image/jpeg;base64,{{ product.image }}" class="card-img-top" alt="{{ product.name }}">
+      <div class="card-body">
+        <h5 class="card-title">{{ product.name }}</h5>
+        <p class="card-text">{{ product.description }}</p>
+        <p class="card-text">${{ "%.2f"|format(product.price) }}</p>
+        <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
+        <form method="POST" action="{{ url_for('views.add_to_cart', product_id=product.id) }}">
+          <button type="submit" class="btn btn-primary">Add to Cart</button>
+        </form>
   </div>
+  
   {% endblock %}
 <!-- Include jQuery and Bootstrap JS in your HTML -->
 <script src="https://code.jquery.com/jquery-3.6.4.slim.min.js" integrity="sha384-H4TZq27qCefg5z1n4p3JpXkyyJ2fCeTajKFXfIOFr8IqO3a3CjQQWayhQpDZxO1" crossorigin="anonymous"></script>

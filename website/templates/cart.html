@@ -1,0 +1,21 @@
+{% extends 'customerBase.html' %}
+
+{% block title %}Cart{% endblock %}
+
+{% block content %}
+  <h1>Your Cart</h1>
+  
+  <ul>
+    {% for product in products_in_cart %}
+      <li>
+        <span>{{ product.name }} - ${{ "%.2f"|format(product.price) }}</span>
+        <a href="{{ url_for('views.remove_from_cart', product_id=product.id) }}">Remove</a>
+      </li>
+    {% endfor %}
+  </ul>
+  
+  <h3>Total Cost: ${{ "%.2f"|format(total_cost) }}</h3>
+  
+  <a href="{{ url_for('views.checkout') }}" class="btn btn-primary">Checkout</a>
+  <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
+{% endblock %}

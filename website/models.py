@@ -14,6 +14,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(150))
     first_name = db.Column(db.String(150))
     products = db.Relationship('Product')
+    cart = db.Relationship("Product", secondary="cart", back_populates="users")
     
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -22,7 +23,8 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     image = db.Column(db.String(255), nullable=True)
-     
+    users = db.Relationship("User", secondary="cart", back_populates="cart")
+    
     def __repr__(self):
         return f"Product('{self.name}', '{self.price}')"
     
@@ -35,3 +37,8 @@ class Product(db.Model):
             img.save(output, format='JPEG')
             image_data = output.getvalue()
             self.image = base64.b64encode(image_data).decode('utf-8')
+            
+class Cart(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)

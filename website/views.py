@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, flash, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
+from sqlalchemy import func
 from .models import Product
 from . import db
 
@@ -14,7 +15,16 @@ def home():
 @views.route('/product/<int:product_id>')
 def view_product(product_id):
     product = Product.query.get(product_id)
-    return render_template('product.html', product=product)
+    return render_template('product.html', user=current_user, product=product)
+
+@views.route('/cart')
+@login_required # prevents ppl from going to homepage without logging in
+def cart():
+    products_in_cart = current_user.cart
+    
+    # Calculate the total cost
+    total_cost = db.session.query(func.sum(Product.price)).filter(Product.id.in_([product.id for product in products_in_cart])).scalar()
+    return render_template("cart.html", user=current_user, products_in_cart=products_in_cart, total_cost=total_cost)
 
 @views.route('/inventory')
 @login_required # prevents ppl from going to homepage without logging in
@@ -30,6 +40,28 @@ def order():
 @login_required # prevents ppl from going to homepage without logging in
 def account():
     return render_template("account.html", user=current_user)
+
+@views.route('/checkout', methods=['GET', 'POST'])
+@login_required
+def checkout():
+    # Retrieve products from the user's cart
+    user = current_user
+    products_in_cart = user.cart
+
+    # Calculate the total cost
+    total_cost = db.session.query(func.sum(Product.price)).filter(Product.id.in_([product.id for product in products_in_cart])).scalar()
+
+    if request.method == 'POST':
+        # Handle payment processing here (e.g., with a payment gateway)
+
+        # After successful payment, you may want to clear the user's cart
+        user.cart.clear()
+        db.session.commit()
+
+        flash('Payment successful! Your order has been placed.', 'success')
+        return redirect(url_for('views.catalog'))
+
+    return render_template('checkout.html', products_in_cart=products_in_cart, user=current_user, total_cost=total_cost)
 
 @views.route('/add_product', methods=['POST'])
 def add_product():
@@ -51,3 +83,24 @@ def add_product():
 
     # Redirect to the shop page or wherever you want
     return redirect(url_for('views.home'))
+
+@views.route('/add_to_cart/<int:product_id>', methods=['POST'])
+@login_required
+def add_to_cart(product_id):
+    product = Product.query.get(product_id)
+    if product:
+        current_user.cart.append(product)
+        db.session.commit()
+        flash(f'Added {product.name} to your cart!', 'success')
+    else:
+        flash('Product not found.', 'error')
+    
+    return redirect(url_for('views.home'))
+
+@views.route('/remove_from_cart/<int:product_id>')
+@login_required
+def remove_from_cart(product_id):
+    product = Product.query.get(product_id)
+    current_user.cart.remove(product)
+    db.session.commit()
+    return redirect(url_for('views.cart'))
