@@ -3,8 +3,9 @@
 {% block title %}Shop{% endblock %}
 
 {% block content %}
-  <h1>Welcome to the Shop, {{ user.first_name }}!</h1>
-
+  {% if user.is_authenticated %}
+  <h1>Welcome to the Shop, {{ return_user_name(user.id)}}!</h1>
+  {% endif %}
   <!-- Add Product Button -->
   <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addProductModal">
     Add Product
