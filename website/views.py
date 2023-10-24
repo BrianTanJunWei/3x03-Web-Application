@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
-from .models import Product
+from .models import Product, Login
 from . import db
 
 views = Blueprint('views', __name__)
@@ -37,3 +37,21 @@ def add_product():
 
     # Redirect to the shop page or wherever you want
     return redirect(url_for('views.shop'))
+
+@views.route('/logs')
+@login_required
+def logs():
+    user_type = current_user.account_type
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        return render_template("admin_logs.html", user=current_user)
+
+@views.route('/staffaccounts')
+@login_required
+def staffaccounts():
+    user_type = current_user.account_type
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        return render_template("admin_accounts.html", user=current_user)

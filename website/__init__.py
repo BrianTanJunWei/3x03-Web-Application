@@ -24,7 +24,7 @@ def create_app():
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    from .models import Login, UserAccounts
+    from .models import Login, UserAccounts, AdminAccounts, StaffAccounts
 
     create_database(app)
 
@@ -39,8 +39,17 @@ def create_app():
     
     def return_user_name(id):
         user = Login.query.get(int(id))
-        name = UserAccounts.query.filter_by(email_address=user.email_address).first()
-        return name.first_name
+        if (user.account_type == 0):
+            name = AdminAccounts.query.filter_by(email_address=user.email_address).first()
+            return name.name
+        if (user.account_type == 1):
+            name = AdminAccounts.query.filter_by(email_address=user.email_address).first()
+            return name.name
+        if (user.account_type == 2):
+
+            name = UserAccounts.query.filter_by(email_address=user.email_address).first()
+            return name.first_name
+        
     
     def return_user_type(id):
         user = Login.query.get(int(id))

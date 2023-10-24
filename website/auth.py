@@ -65,9 +65,10 @@ def sign_up():
         else:
             hashed_password = bcrypt.generate_password_hash(password1).decode('utf-8')
             new_user_login = Login(email_address=email, password=hashed_password,
-                                   account_status= True, account_type=2)
-            new_user_accounts = UserAccounts(email_address=email, address=address, first_name=first_name
-                                             ,last_name=last_name, contact_no=contact)
+                                   account_status= True, account_type=0)
+            # new_user_accounts = UserAccounts(email_address=email, address=address, first_name=first_name
+            #                                  ,last_name=last_name, contact_no=contact)
+            new_user_accounts = AdminAccounts(email_address=email, name= first_name + " " + last_name)
             db.session.add(new_user_login)
             db.session.add(new_user_accounts)
             db.session.commit()
