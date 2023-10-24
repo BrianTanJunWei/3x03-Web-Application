@@ -41,8 +41,13 @@ def create_app():
         user = Login.query.get(int(id))
         name = UserAccounts.query.filter_by(email_address=user.email_address).first()
         return name.first_name
+    
+    def return_user_type(id):
+        user = Login.query.get(int(id))
+        return user.account_type
 
-    app.jinja_env.globals.update(return_user_name = return_user_name)
+    app.jinja_env.globals.update(return_user_name=return_user_name,
+                                 return_user_type=return_user_type)
     return app
 
 

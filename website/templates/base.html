@@ -29,11 +29,26 @@
       </button>
       <div class="collapse navbar-collapse" id="navbar">
         <div class="navbar-nav">
+          <!-- Testing role based navbar -->
             {% if user.is_authenticated %}
+            {% if (return_user_type(user.id)) == 0 %}
             <a class="nav-item nav-link" id="shop" href="/">Shop</a>
             <a class="nav-item nav-link" id="order" href="/order">Order</a>
             <a class="nav-item nav-link" id="account" href="/account">Account</a>
             <a class="nav-item nav-link" id="logout" href="/logout">Logout</a>
+            {% endif %}
+            {% if (return_user_type(user.id)) == 1 %}
+            <a class="nav-item nav-link" id="shop" href="/">Shop</a>
+            <a class="nav-item nav-link" id="order" href="/order">Order</a>
+            <a class="nav-item nav-link" id="account" href="/account">Account</a>
+            <a class="nav-item nav-link" id="logout" href="/logout">Logout</a>
+            {% endif %}
+            {% if (return_user_type(user.id)) == 2 %}
+            <a class="nav-item nav-link" id="shop" href="/">Shop</a>
+            <a class="nav-item nav-link" id="order" href="/order">Order</a>
+            <a class="nav-item nav-link" id="account" href="/account">Account</a>
+            <a class="nav-item nav-link" id="logout" href="/logout">Logout</a>
+            {% endif %}
             {% else %}
             <a class="nav-item nav-link" id="login" href="/login">Login</a>
             <a class="nav-item nav-link" id="signUp" href="/sign-up">Sign Up</a>
