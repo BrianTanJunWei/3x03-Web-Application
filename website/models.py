@@ -30,6 +30,17 @@ class AdminAccounts(db.Model):
     email_address = db.Column(db.String(150),primary_key=True)
     name = db.Column(db.String(150))
 
+class Logs(db.Model):
+    log_id = db.Column(db.Integer, primary_key=True)
+    log_level = db.Column(db.String(150))
+    log_type = db.Column(db.String(150))
+    entity = db.Column(db.String(150))
+    log_desc = db.Column(db.String(150))
+    log_time = db.Column(db.DateTime)
+    account_type = db.Column(db.String(150))
+    account_id = db.Column(db.String(150))
+    affected_id = db.Column(db.String(150))
+
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
