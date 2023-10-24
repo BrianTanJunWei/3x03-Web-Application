@@ -13,16 +13,17 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(150), unique=True)
     password = db.Column(db.String(150))
     first_name = db.Column(db.String(150))
-    last_name = db.Column(db.String(150))
-    contact_no = db.Column(db.String(150))
-    account_status = db.Column(db.String(150))
-
+    products = db.Relationship('Product')
+    cart = db.Relationship("Product", secondary="cart", back_populates="users")
+    
 class Product(db.Model):
-    product_id = db.Column(db.Integer, primary_key=True)
-    product_name = db.Column(db.String(100), nullable=False)
-    product_description = db.Column(db.Text, nullable=True)
-    product_price = db.Column(db.Float, nullable=False)
-    product_image = db.Column(db.String(255), nullable=True)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    price = db.Column(db.Float, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    image = db.Column(db.String(255), nullable=True)
+    users = db.Relationship("User", secondary="cart", back_populates="cart")
     
     def __repr__(self):
         return f"Product('{self.name}', '{self.price}')"
@@ -38,29 +39,6 @@ class Product(db.Model):
             self.image = base64.b64encode(image_data).decode('utf-8')
             
 class Cart(db.Model):
-    cart_id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    customer = db.relationship('User', back_populates='carts')
-    
-class CartItem(db.Model):
-    cart_id = db.Column(db.Integer, db.ForeignKey('cart.cart_id'), primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), primary_key=True)
-    quantity = db.Column(db.Integer)
-    cart = db.relationship('Cart', back_populates='cart_items')
-    product = db.relationship('Product', back_populates='cart_items')
-    
-class Order(db.Model):
-    order_id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    order_status = db.Column(db.String(20), default="processing")  # Default value can be set as needed
-    placed_date = db.Column(db.Date)
-    shipped_date = db.Column(db.Date)
-    delivered_date = db.Column(db.Date)
-    customer = db.relationship('User', back_populates='orders')
-
-class OrderItem(db.Model):
-    order_id = db.Column(db.Integer, db.ForeignKey('order.order_id'), primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), primary_key=True)
-    quantity = db.Column(db.Integer)
-    order = db.relationship('Order', back_populates='order_items')
-    product = db.relationship('Product', back_populates='order_items')
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
