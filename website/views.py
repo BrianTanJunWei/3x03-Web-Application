@@ -1,7 +1,8 @@
+from datetime import datetime
 from flask import Blueprint, flash, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import func
-from .models import Cart, CartItem, Product, User
+from .models import Cart, CartItem, Order, OrderItem, Product, User
 from . import db
 
 views = Blueprint('views', __name__)
@@ -29,10 +30,15 @@ def view_product(product_id):
 @login_required
 def cart():
     user = current_user
-    cart_items = CartItem.query.filter_by(cart_id=user.cart.cart_id).all() if user.cart else []
-    
-    total_cost = sum(item.product.price * item.quantity for item in cart_items)
-    
+    cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
+
+    if cart:
+        cart_items = cart.cart_items
+        total_cost = sum(item.product.price * item.quantity for item in cart_items)
+    else:
+        cart_items = []
+        total_cost = 0.0
+
     return render_template("cart.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost)
 
 @views.route('/inventory')
@@ -50,27 +56,48 @@ def order():
 def account():
     return render_template("account.html", user=current_user)
 
-# In your views or controller, when the user completes a purchase, create a new cart
-@views.route('/checkout', methods=['POST'])
+@views.route('/checkout', methods=['GET', 'POST'])
 @login_required
 def checkout():
-    # Retrieve products from the user's cart
     user = current_user
-    products_in_cart = user.cart
+    cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
 
-    # Calculate the total cost
-    total_cost = db.session.query(func.sum(Product.price)).filter(Product.id.in_([product.id for product in products_in_cart])).scalar()
+    cart_items = cart.cart_items
+    total_cost = sum(item.product.price * item.quantity for item in cart_items)
+    # Simulate a payment (marking the order as paid)
+    mark_order_as_paid(current_user, total_cost)
 
-    if request.method == 'POST':
-        # Handle payment processing here (e.g., with a payment gateway)
+    print(current_user)
+    return render_template('checkout.html', user=current_user, products_in_cart=cart_items, total_cost=total_cost)
 
-        # Create a new cart for the user
-        create_new_cart(user)
+def mark_order_as_paid(user, total_cost):
+    
+    # Create a new order for the user
+    new_order = Order(customer=user.id, order_status='paid', placed_date=datetime.now())
 
-        flash('Payment successful! Your order has been placed.', 'success')
-        return redirect(url_for('views.catalog'))
+    cart = Cart.get_active_cart(user.id)
+    # Retrieve the products from the user's current cart
+    cart_items = cart.cart_items
 
-    return render_template('checkout.html', products_in_cart=products_in_cart, user=current_user, total_cost=total_cost)
+    for cart_item in cart_items:
+        # Create an order item for each product in the cart
+        order_item = OrderItem(order=new_order, product=cart_item.product, quantity=cart_item.quantity)
+        db.session.add(order_item)
+
+    # Mark the order as shipped (or do any other relevant processing)
+    new_order.shipped_date = datetime.now()
+
+    # Commit changes to the database
+    db.session.add(new_order)
+    db.session.commit()
+
+    # Create a new cart for the user
+    new_cart = Cart(customer=user.id)
+    db.session.add(new_cart)
+    
+    # Commit changes to the database
+    db.session.commit()
+
 
 # Define a method to create a new cart
 def create_new_cart(user):
@@ -123,10 +150,19 @@ def add_to_cart(product_id):
     
     return redirect(url_for('views.home'))
 
-@views.route('/remove_from_cart/<int:product_id>')
+@views.route('/remove_from_cart/<int:product_id>', methods=['GET', 'POST'])
 @login_required
 def remove_from_cart(product_id):
-    product = Product.query.get(product_id)
-    current_user.cart.remove(product)
-    db.session.commit()
+    user = current_user
+    cart = Cart.get_active_cart(user.id)  # Get the user's active cart
+
+    if cart:
+        product = Product.query.get(product_id)
+        cart_item = CartItem.query.filter_by(cart_id=cart.cart_id, product_id=product_id).first()
+
+        if cart_item:
+            # Remove the cart item and commit the changes
+            db.session.delete(cart_item)
+            db.session.commit()
+
     return redirect(url_for('views.cart'))

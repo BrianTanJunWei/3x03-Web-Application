@@ -5,19 +5,44 @@
 {% block content %}
   <h1>Checkout</h1>
 
-  <h3>Selected Products</h3>
-  <ul>
-    {% for product in products_in_cart %}
-      <li>{{ product.name }} - ${{ "%.2f"|format(product.price) }}</li>
-    {% endfor %}
-  </ul>
+  <h2>Your Order</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Price</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in products_in_cart %}
+        <tr>
+          <td>{{ item.product.name }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>${{ "%.2f"|format(item.product.price) }}</td>
+          <td>${{ "%.2f"|format(item.product.price * item.quantity) }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-  <h3>Total Cost: ${{ "%.2f"|format(total_cost) }}</h3>
-  <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
-  <h3>Payment Information</h3>
-  <form method="POST">
-    <!-- Add form fields for payment information (e.g., credit card, billing address) here -->
+  <p>Total Cost: ${{ "%.2f"|format(total_cost) }}</p>
 
-    <button type="submit" class="btn btn-primary">Submit Payment</button>
+  <h2>Payment</h2>
+  <form method="post" action="{{ url_for('views.checkout') }}">
+    <!-- Add your payment form fields here (e.g., credit card details, address, etc.) -->
+    <div class="form-group">
+      <label for="creditCard">Credit Card</label>
+      <input type="text" class="form-control" id="creditCard" name="creditCard">
+    </div>
+    <div class="form-group">
+      <label for="address">Billing Address</label>
+      <textarea class="form-control" id="address" name="address"></textarea>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Pay Now</button>
   </form>
+</div>
+
 {% endblock %}
