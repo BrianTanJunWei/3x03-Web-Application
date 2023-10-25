@@ -1,9 +1,12 @@
 from datetime import datetime
-from flask import Blueprint, flash, render_template, request, redirect, url_for
+from flask import Blueprint, flash, make_response, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import func
 from .models import Cart, CartItem, Order, OrderItem, Product, User
 from . import db
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 views = Blueprint('views', __name__)
 
@@ -65,9 +68,16 @@ def checkout():
     cart_items = cart.cart_items
     total_cost = sum(item.product.price * item.quantity for item in cart_items)
     # Simulate a payment (marking the order as paid)
-    mark_order_as_paid(current_user, total_cost)
+    if request.method == 'POST':
+        mark_order_as_paid(current_user, total_cost)
+        pdf_data = generate_order_pdf(current_user, cart_items, total_cost)
 
-    print(current_user)
+        response = make_response(pdf_data)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=order_summary.pdf'
+
+        return response
+    
     return render_template('checkout.html', user=current_user, products_in_cart=cart_items, total_cost=total_cost)
 
 def mark_order_as_paid(user, total_cost):
@@ -98,6 +108,34 @@ def mark_order_as_paid(user, total_cost):
     # Commit changes to the database
     db.session.commit()
 
+def generate_order_pdf(user, cart_items, total_cost):
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=letter)
+
+    # Customize the PDF layout and content
+    c.setFont("Helvetica", 12)
+    c.drawString(100, 750, "Order Summary")
+    c.drawString(100, 730, f"User: {user.first_name} {user.last_name}")
+
+    # Iterate through cart items
+    y = 710  # Starting y-coordinate
+    for cart_item in cart_items:
+        product = cart_item.product
+        c.drawString(100, y, f"Product: {product.name}")
+        c.drawString(250, y, f"Quantity: {cart_item.quantity}")
+        c.drawString(350, y, f"Price: ${product.price:.2f}")
+        c.drawString(450, y, f"Subtotal: ${cart_item.quantity * product.price:.2f}")
+        y -= 20  
+
+    c.drawString(100, y, f"Total Cost: ${total_cost:.2f}")
+
+    c.showPage()
+    c.save()
+
+    pdf_data = buffer.getvalue()
+    buffer.close()
+
+    return pdf_data
 
 # Define a method to create a new cart
 def create_new_cart(user):
