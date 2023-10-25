@@ -1,6 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, send_file
 from flask_login import login_required, current_user
-from .models import Product, Login
+from .models import Product, Login, Logs
+import xlsxwriter
+from io import BytesIO
 from . import db
 
 views = Blueprint('views', __name__)
@@ -45,7 +47,21 @@ def logs():
     if(user_type != 0):
         return redirect(url_for('views.home'))
     else:
-        return render_template("admin_logs.html", user=current_user)
+        logs = Logs.query.all()
+        return render_template("admin_logs.html", user=current_user, logs=logs)
+    
+@views.route('/logs/<logs_id>')
+@login_required
+def view_log(logs_id):
+    user_type = current_user.account_type
+    valid = 1
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        logs = Logs.query.get(logs_id)
+        if (logs is None):
+            valid = 0
+        return render_template("admin_log_details.html", user=current_user, logs=logs, valid=valid)
 
 @views.route('/staffaccounts')
 @login_required
@@ -55,3 +71,62 @@ def staffaccounts():
         return redirect(url_for('views.home'))
     else:
         return render_template("admin_accounts.html", user=current_user)
+    
+
+@views.route('/download_logs_api')
+@login_required
+def downloadLogs():
+    user_type = current_user.account_type
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        apiResponse = createApiResponse()
+        return apiResponse
+    
+def createApiResponse():
+    bufferFile = writeBufferExcelFile()
+    mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    return send_file(bufferFile, mimetype=mimetype)
+
+def writeBufferExcelFile():
+    buffer = BytesIO()
+    workbook = xlsxwriter.Workbook(buffer)
+    worksheet = workbook.add_worksheet()
+    logs = Logs.query.all()
+
+    worksheet.write(0,0,"Log ID")
+    worksheet.write(0,1,"Log Level")
+    worksheet.write(0,2,"Log Type")
+    worksheet.write(0,3,"Entity")
+    worksheet.write(0,4,"Log Description")
+    worksheet.write(0,5,"Log Time")
+    worksheet.write(0,6,"Account Type")
+    worksheet.write(0,7, "Account ID")
+    worksheet.write(0,8,"Affected ID")
+
+    vert = 1
+    hor = 0
+    for item in logs:
+        worksheet.write(vert, hor, item.log_id)
+        hor +=1
+        worksheet.write(vert,hor, item.log_level)
+        hor +=1
+        worksheet.write(vert,hor, item.log_type)
+        hor +=1
+        worksheet.write(vert,hor, item.entity)
+        hor +=1
+        worksheet.write(vert,hor, item.log_desc)
+        hor +=1
+        worksheet.write(vert,hor, item.log_time)
+        hor +=1
+        worksheet.write(vert,hor, item.account_type)
+        hor +=1
+        worksheet.write(vert,hor, item.account_id)
+        hor +=1
+        worksheet.write(vert,hor, item.affected_id)
+        vert+=1
+        hor = 0
+    
+    workbook.close()
+    buffer.seek(0)
+    return buffer
