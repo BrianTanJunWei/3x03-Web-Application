@@ -1,7 +1,7 @@
 from flask import Blueprint, flash, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import func
-from .models import Product, User
+from .models import Cart, CartItem, Product, User
 from . import db
 
 views = Blueprint('views', __name__)
@@ -95,13 +95,15 @@ def add_product():
 @views.route('/add_to_cart/<int:product_id>', methods=['POST'])
 @login_required
 def add_to_cart(product_id):
+    user = current_user
     product = Product.query.get(product_id)
-    if product:
-        current_user.cart.append(product)
-        db.session.commit()
-        flash(f'Added {product.name} to your cart!', 'success')
-    else:
-        flash('Product not found.', 'error')
+    
+    # Add the product to the user's cart
+    cart_item = CartItem(product_id=product.id, quantity=1)
+    db.session.add(cart_item)
+    db.session.commit()
+    
+    flash(f'{product.name} added to your cart.', 'success')
     
     return redirect(url_for('views.home'))
 
