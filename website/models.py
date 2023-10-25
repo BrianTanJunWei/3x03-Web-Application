@@ -16,7 +16,6 @@ class User(db.Model, UserMixin):
     last_name = db.Column(db.String(150))
     contact_no = db.Column(db.String(150))
     account_status = db.Column(db.String(150))
-    cart = db.relationship("Product", back_populates="users")
     carts = db.relationship("Cart", back_populates="customer")
     orders = db.relationship("Order", back_populates="customer")
     
@@ -26,7 +25,6 @@ class Product(db.Model):
     description = db.Column(db.Text, nullable=True)
     price = db.Column(db.Float, nullable=False)
     image = db.Column(db.String(255), nullable=True)
-    users = db.relationship("User", back_populates="cart")
     cart_items = db.relationship("CartItem", back_populates="product")
     order_items = db.relationship("OrderItem", back_populates="product")
     
