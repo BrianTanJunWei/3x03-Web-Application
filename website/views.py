@@ -1,7 +1,7 @@
 from flask import Blueprint, flash, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import func
-from .models import Product
+from .models import Product, User
 from . import db
 
 views = Blueprint('views', __name__)
@@ -10,8 +10,16 @@ views = Blueprint('views', __name__)
 @login_required # prevents ppl from going to homepage without logging in
 def home():
     products = Product.query.all()
-    return render_template("catalog.html", user=current_user, products=products)
+    account_status = get_user_role(current_user.id)
+    return render_template("catalog.html", user=current_user, products=products, account_status=account_status)
 
+def get_user_role(id):
+    user = User.query.get(id)
+    if user:
+        return user.account_status
+    else:
+        return 'guest'
+    
 @views.route('/product/<int:product_id>')
 def view_product(product_id):
     product = Product.query.get(product_id)
