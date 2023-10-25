@@ -53,11 +53,15 @@ class Product(db.Model):
 # Cart Table
 class Cart(db.Model):
     cart_id = db.Column(db.Integer, primary_key=True)
-    customer = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
+    customer = db.Column(db.Integer, db.ForeignKey('user.email'), nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+   
     # Relationship with CartItem
     cart_items = db.relationship('CartItem', backref='cart', lazy=True)
     
+    @classmethod
+    def get_active_cart(cls, user_id):
+        return cls.query.filter_by(customer=user_id, is_active=True).first()
     
 # CartItems Table
 class CartItem(db.Model):

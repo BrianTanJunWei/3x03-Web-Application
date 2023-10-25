@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
-from .models import User
+from .models import Cart, User
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
@@ -59,7 +59,9 @@ def sign_up():
         else:
             hashed_password = bcrypt.generate_password_hash(password1).decode('utf-8')
             new_user = User(email=email, first_name=first_name, password=hashed_password)
+            
             db.session.add(new_user)
+
             db.session.commit()
             
             login_user(new_user, remember=True) # allows user to stay logged in

@@ -26,13 +26,14 @@ def view_product(product_id):
     return render_template('product.html', user=current_user, product=product)
 
 @views.route('/cart')
-@login_required # prevents ppl from going to homepage without logging in
+@login_required
 def cart():
-    products_in_cart = current_user.cart
+    user = current_user
+    cart_items = CartItem.query.filter_by(cart_id=user.cart.cart_id).all() if user.cart else []
     
-    # Calculate the total cost
-    total_cost = db.session.query(func.sum(Product.price)).filter(Product.id.in_([product.id for product in products_in_cart])).scalar()
-    return render_template("cart.html", user=current_user, products_in_cart=products_in_cart, total_cost=total_cost)
+    total_cost = sum(item.product.price * item.quantity for item in cart_items)
+    
+    return render_template("cart.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost)
 
 @views.route('/inventory')
 @login_required # prevents ppl from going to homepage without logging in
@@ -49,7 +50,8 @@ def order():
 def account():
     return render_template("account.html", user=current_user)
 
-@views.route('/checkout', methods=['GET', 'POST'])
+# In your views or controller, when the user completes a purchase, create a new cart
+@views.route('/checkout', methods=['POST'])
 @login_required
 def checkout():
     # Retrieve products from the user's cart
@@ -62,14 +64,20 @@ def checkout():
     if request.method == 'POST':
         # Handle payment processing here (e.g., with a payment gateway)
 
-        # After successful payment, you may want to clear the user's cart
-        user.cart.clear()
-        db.session.commit()
+        # Create a new cart for the user
+        create_new_cart(user)
 
         flash('Payment successful! Your order has been placed.', 'success')
         return redirect(url_for('views.catalog'))
 
     return render_template('checkout.html', products_in_cart=products_in_cart, user=current_user, total_cost=total_cost)
+
+# Define a method to create a new cart
+def create_new_cart(user):
+    new_cart = Cart(user=user)
+    db.session.add(new_cart)
+    db.session.commit()
+    return new_cart
 
 @views.route('/add_product', methods=['POST'])
 def add_product():
@@ -98,8 +106,16 @@ def add_to_cart(product_id):
     user = current_user
     product = Product.query.get(product_id)
     
+    # Check if the user has an active cart, and create one if it doesn't exist
+    cart = Cart.get_active_cart(user.id)
+    if cart is None:
+        cart = Cart(customer=user.id)
+        db.session.add(cart)
+        db.session.commit()
+        
     # Add the product to the user's cart
-    cart_item = CartItem(product_id=product.id, quantity=1)
+    cart_item = CartItem(cart_id=cart.cart_id, product_id=product.id, quantity=1)
+    
     db.session.add(cart_item)
     db.session.commit()
     
