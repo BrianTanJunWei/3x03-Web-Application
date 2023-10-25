@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, send_file
 from flask_login import login_required, current_user
-from .models import Product, Login, Logs
+from .models import Product, Login, Logs, StaffAccounts
 import xlsxwriter
 from io import BytesIO
 from . import db
@@ -67,10 +67,15 @@ def view_log(logs_id):
 @login_required
 def staffaccounts():
     user_type = current_user.account_type
+    valid = 1
     if(user_type != 0):
         return redirect(url_for('views.home'))
     else:
-        return render_template("admin_accounts.html", user=current_user)
+        staff = StaffAccounts.query.all()
+        users = Login.query.all()
+        if (staff is None or users is None):
+            valid = 0
+        return render_template("admin_accounts.html", user=current_user, users=users, staff=staff, valid=valid)
     
 
 @views.route('/download_logs_api')

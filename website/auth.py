@@ -79,3 +79,41 @@ def sign_up():
             return redirect(url_for('views.home'))
 
     return render_template("sign_up.html", user=current_user)
+
+@auth.route('/adminstaffcreation', methods=['GET', 'POST'])
+@login_required
+def create_staff():
+    user_type = current_user.account_type
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        if request.method == 'POST':
+            email = request.form.get('email')
+            name = request.form.get('name')
+            password1 = request.form.get('password1')
+            password2 = request.form.get('password2')
+            # check if user exist
+            user = Login.query.filter_by(email_address=email).first()
+
+            if user:
+                flash('Email already exist', category='error')
+            elif len(email) < 4:
+                flash('Invalid email', category='error')
+            elif password1 != password2:
+                flash('Passwords does not match', category='error')
+            elif len(password1) < 7:
+                flash('Password must be at least 7 character', category='error')
+            else:
+                hashed_password = bcrypt.generate_password_hash(password1).decode('utf-8')
+                new_user_login = Login(email_address=email, password=hashed_password,
+                                    account_status= True, account_type=1)
+                new_user_accounts = StaffAccounts(email_address=email, name=name)
+                # new_user_accounts = AdminAccounts(email_address=email, name= first_name + " " + last_name)
+                db.session.add(new_user_login)
+                db.session.add(new_user_accounts)
+                db.session.commit()
+
+                flash('Staff Account Created!', category='success')
+                return redirect(url_for('views.staffaccounts'))
+
+        return render_template("admin_create_staff.html", user=current_user)
