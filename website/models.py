@@ -10,26 +10,30 @@ import os
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(150), unique=True)
-    password = db.Column(db.String(150))
-    first_name = db.Column(db.String(150))
-    last_name = db.Column(db.String(150))
-    contact_no = db.Column(db.String(150))
-    account_status = db.Column(db.String(150))
-    cart = db.relationship("Product", back_populates="users")
-    carts = db.relationship("Cart", back_populates="customer")
-    orders = db.relationship("Order", back_populates="customer")
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+    address = db.Column(db.String(255))
+    first_name = db.Column(db.String(50))
+    last_name = db.Column(db.String(50))
+    contact_no = db.Column(db.String(15))
+    account_status = db.Column(db.String(20))
+    
+    # Relationship with Cart
+    carts = db.relationship('Cart', backref='user', lazy=True)
+
+    # Relationship with Order
+    orders = db.relationship('Order', backref='user', lazy=True)
     
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
     price = db.Column(db.Float, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     image = db.Column(db.String(255), nullable=True)
-    users = db.relationship("User", back_populates="cart")
-    cart_items = db.relationship("CartItem", back_populates="product")
-    order_items = db.relationship("OrderItem", back_populates="product")
+    is_hidden = db.Column(db.Boolean, default=True)
+    # Relationships with CartItem and OrderItem
+    cart_items = db.relationship('CartItem', backref='product', lazy=True)
+    order_items = db.relationship('OrderItem', backref='product', lazy=True)
     
     def __repr__(self):
         return f"Product('{self.name}', '{self.price}')"
@@ -44,32 +48,47 @@ class Product(db.Model):
             image_data = output.getvalue()
             self.image = base64.b64encode(image_data).decode('utf-8')
             
+# Cart Table
 class Cart(db.Model):
     cart_id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    customer = db.relationship('User', back_populates='carts')
-    cart_items = db.relationship("CartItem", back_populates="cart")
+    customer = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+   
+    # Relationship with CartItem
+    cart_items = db.relationship('CartItem', backref='cart', lazy=True)
+
+    @classmethod
+    def get_active_cart(cls, user_id):
+        return cls.query.filter_by(customer=user_id, is_active=True).first()
+
     
+# CartItems Table
 class CartItem(db.Model):
-    cart_id = db.Column(db.Integer, db.ForeignKey('cart.cart_id'), primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), primary_key=True)
-    quantity = db.Column(db.Integer)
-    cart = db.relationship('Cart', back_populates='cart_items')
-    product = db.relationship('Product', back_populates='cart_items')
+    cart_item_id = db.Column(db.Integer, primary_key=True)
+    cart_id = db.Column(db.Integer, db.ForeignKey('cart.cart_id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
     
 class Order(db.Model):
     order_id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    order_status = db.Column(db.String(20), default="processing")  # Default value can be set as needed
-    placed_date = db.Column(db.Date)
-    shipped_date = db.Column(db.Date)
-    delivered_date = db.Column(db.Date)
-    customer = db.relationship('User', back_populates='orders')
-    order_items = db.relationship('OrderItem', back_populates='order')
+    customer = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    order_status = db.Column(db.String(20))
+    placed_date = db.Column(db.DateTime)
+    shipped_date = db.Column(db.DateTime)
+    delivered_date = db.Column(db.DateTime)
 
+    # Relationship with OrderItem
+    order_items = db.relationship('OrderItem', backref='order', lazy=True)
+
+    def calculate_total_cost(self):
+        total_cost = 0.0
+        for order_item in self.order_items:
+            total_cost += order_item.product.price * order_item.quantity
+        return total_cost
+
+# OrderItems Table
 class OrderItem(db.Model):
-    order_id = db.Column(db.Integer, db.ForeignKey('order.order_id'), primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), primary_key=True)
-    quantity = db.Column(db.Integer)
-    order = db.relationship('Order', back_populates='order_items')
-    product = db.relationship('Product', back_populates='order_items')
+    order_item_id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.order_id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)

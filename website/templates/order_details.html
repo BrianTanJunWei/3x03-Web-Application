@@ -1,0 +1,35 @@
+{% extends 'customerBase.html' %}
+
+{% block title %}Order Details{% endblock %}
+
+{% block content %}
+  <h1>Order Details</h1>
+  <p>Order Date: {{ order.placed_date }}</p>
+  <p>Order Status: {{ order.order_status }}</p>
+
+  {% if order_items %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Product Name</th>
+          <th>Price</th>
+          <th>Quantity</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order_items %}
+          <tr>
+            <td>{{ item.product.name }}</td>
+            <td>${{ "%.2f"|format(item.product.price) }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ "%.2f"|format(item.quantity * item.product.price) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p>Total Cost: ${{ "%.2f"|format(order.calculate_total_cost()) }}</p>
+  {% else %}
+    <p>No items in this order.</p>
+  {% endif %}
+{% endblock %}

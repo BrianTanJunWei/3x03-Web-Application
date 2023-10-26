@@ -1,0 +1,67 @@
+{% extends 'customerBase.html' %}
+
+{% block title %}All Orders{% endblock %}
+
+{% block content %}
+  <h1>All Orders</h1>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Customer Name</th>
+        <th>Order Date</th>
+        <th>Total Cost</th>
+        <th>Order Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for order in orders %}
+      <tr>
+        <td>{{ order.order_id }}</td>
+        <td>{{ order.user.first_name }}</td>
+        <td>{{ order.placed_date }}</td>
+        <td>${{ "%.2f"|format(order.calculate_total_cost()) }}</td>
+        <td>{{ order.order_status }}</td>
+        <td>
+          <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#orderModal{{ order.order_id }}">
+            Update status
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  
+  {% for order in orders %}
+  <div class="modal fade" id="orderModal{{ order.order_id }}" tabindex="-1" role="dialog" aria-labelledby="orderModalLabel{{ order.order_id }}" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="orderModalLabel{{ order.order_id }}">Update Order Status</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+            <!-- Add a form here to update the order status -->
+            <!-- <form method="POST" action="{{ update_order_url }}"> -->
+            <form method="POST" action="{{ url_for('views.update_order_status', order_id=order.order_id) }}">
+
+                <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                <div class="form-group">
+                    <label for="new_status">New Status</label>
+                    <select class="form-control" name="new_status">
+                        <option value="Processing">Processing</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Delivered">Delivered</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+{% endblock %}
