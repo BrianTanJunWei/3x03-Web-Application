@@ -35,11 +35,13 @@
 
   <h3>Total Cost: ${{ "%.2f"|format(total_cost) }}</h3>
 
-  
     <a href="{{ url_for('views.checkout') }}" class="btn btn-primary">Checkout</a>
     <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
+
   {% else %}
+
     <p>Your cart is empty.</p>
     <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
+    
   {% endif %}
 {% endblock %}
