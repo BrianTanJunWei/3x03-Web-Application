@@ -1,0 +1,47 @@
+{% extends 'customerBase.html' %}
+
+{% block title %}Order Confirmation{% endblock %}
+
+{% block content %}
+  <h1>Order Confirmation</h1>
+
+  <p>Thank you for your order!</p>
+  <p>Your payment has been processed successfully, and your order is confirmed.</p>
+
+  <h2>Order Details</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Price</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in products_in_cart %}
+        <tr>
+          <td>{{ item.product.name }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>${{ "%.2f"|format(item.product.price) }}</td>
+          <td>${{ "%.2f"|format(item.product.price * item.quantity) }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p>Total Cost: ${{ "%.2f"|format(total_cost) }}</p>
+
+  <p>Your order will be shipped to the following address:</p>
+  <p>{{ current_user.address }}</p>
+
+  <p>If you have any questions or need further assistance, please contact our support team.</p>
+
+  <a href="{{ url_for('views.home') }}" class="btn btn-primary">Back to catalog</a>
+  <a href="{{ url_for('views.view_pdf') }}" target="_blank" class="btn btn-primary">View PDF</a>
+
+
+</div>
+
+
+{% endblock %}

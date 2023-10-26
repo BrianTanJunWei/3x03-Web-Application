@@ -82,15 +82,46 @@ def checkout():
     # Simulate a payment (marking the order as paid)
     if request.method == 'POST':
         mark_order_as_paid(current_user, total_cost)
-        pdf_data = generate_order_pdf(current_user, cart_items, total_cost)
-
-        response = make_response(pdf_data)
-        response.headers['Content-Type'] = 'application/pdf'
-        response.headers['Content-Disposition'] = f'inline; filename=order_summary.pdf'
-    
-        return response
+        
+        return render_template("confirmation.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost)
     
     return render_template('checkout.html', user=current_user, products_in_cart=cart_items, total_cost=total_cost)
+
+@views.route('/confirmation')
+def confirmation():
+    user = current_user
+    cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
+
+    cart_items = cart.cart_items
+    total_cost = sum(item.product.price * item.quantity for item in cart_items)
+
+    pdf_data = generate_order_pdf(current_user, cart_items, total_cost)
+
+    response = make_response(pdf_data)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=order_summary.pdf'
+    
+    return response
+    
+@views.route('/view_pdf')
+def view_pdf():
+    user = current_user
+    cart = Cart.get_active_cart(user.id)
+
+    if cart:
+        cart_items = cart.cart_items
+        total_cost = sum(item.product.price * item.quantity for item in cart_items)
+    else:
+        cart_items = []
+        total_cost = 0.0
+
+    pdf_data = generate_order_pdf(user, cart_items, total_cost)
+
+    response = make_response(pdf_data)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'inline; filename=order_summary.pdf'
+
+    return response
 
 def mark_order_as_paid(user, total_cost):
     
@@ -111,11 +142,13 @@ def mark_order_as_paid(user, total_cost):
 
     # Commit changes to the database
     db.session.add(new_order)
-    db.session.commit()
-
+    
+    # Clear the user's cart
+    for cart_item in cart_items:
+        db.session.delete(cart_item)
+    
     # Create a new cart for the user
-    new_cart = Cart(customer=user.id)
-    db.session.add(new_cart)
+    create_new_cart(user)
     
     # Commit changes to the database
     db.session.commit()

@@ -30,7 +30,7 @@
   <p>Total Cost: ${{ "%.2f"|format(total_cost) }}</p>
 
   <h2>Payment</h2>
-  <form method="post" action="{{ url_for('views.checkout') }}" id="payment-form" target="_blank">
+  <form method="post" action="{{ url_for('views.checkout') }}" id="payment-form">
     <div class="form-group">
       <label for="card-element">Credit Card</label>
       <div id="card-element">
@@ -40,6 +40,7 @@
       <div id="card-errors" role="alert"></div>
     </div>
     <button id="submit-payment" class="btn btn-primary">Pay Now</button>
+    <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
   </form>
 
   <script src="https://js.stripe.com/v3/"></script>
