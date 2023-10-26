@@ -32,25 +32,31 @@ def view_product(product_id):
     product = Product.query.get(product_id)
     return render_template('product.html', user=current_user, product=product)
 
-@views.route('/cart')
-@login_required
-def cart():
-    user = current_user
-    cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
-
-    if cart:
-        cart_items = cart.cart_items
-        total_cost = sum(item.product.price * item.quantity for item in cart_items)
-    else:
-        cart_items = []
-        total_cost = 0.0
-
-    return render_template("cart.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost)
-
 @views.route('/inventory')
 @login_required # prevents ppl from going to homepage without logging in
 def inventory():
     return render_template("inventory.html", user=current_user)
+
+@views.route('/add_product', methods=['POST'])
+def add_product():
+    # Get data from the request
+    name = request.form.get('name')
+    description = request.form.get('description')
+    price = request.form.get('price')
+    image_file = request.files['image']
+
+    # Create a new product
+    new_product = Product(name=name, description=description, price=price)
+
+    # Save the image
+    new_product.save_image(image_file)
+    
+    # Add the new product to the database
+    db.session.add(new_product)
+    db.session.commit()
+
+    # Redirect to the shop page or wherever you want
+    return redirect(url_for('views.home'))
 
 @views.route('/account', methods=['GET', 'POST'])
 @login_required
@@ -70,6 +76,21 @@ def account():
         flash('Your account information has been updated.', 'success')
 
     return render_template("account.html", user=user)
+
+@views.route('/cart')
+@login_required
+def cart():
+    user = current_user
+    cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
+
+    if cart:
+        cart_items = cart.cart_items
+        total_cost = sum(item.product.price * item.quantity for item in cart_items)
+    else:
+        cart_items = []
+        total_cost = 0.0
+
+    return render_template("cart.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost)
 
 @views.route('/checkout', methods=['GET', 'POST'])
 @login_required
@@ -103,26 +124,6 @@ def confirmation():
     
     return render_template("confirmation.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost)
     
-@views.route('/view_pdf')
-def view_pdf():
-    user = current_user
-    cart = Cart.get_active_cart(user.id)
-
-    if cart:
-        cart_items = cart.cart_items
-        total_cost = sum(item.product.price * item.quantity for item in cart_items)
-    else:
-        cart_items = []
-        total_cost = 0.0
-
-    pdf_data = generate_order_pdf(user, cart_items, total_cost)
-
-    response = make_response(pdf_data)
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = 'inline; filename=order_summary.pdf'
-
-    return response
-
 def mark_order_as_paid(user, total_cost):
     
     # Create a new order for the user
@@ -149,7 +150,27 @@ def mark_order_as_paid(user, total_cost):
     db.session.add(new_cart)
     
     # Commit changes to the database
-    db.session.commit()
+    db.session.commit()    
+
+@views.route('/view_pdf')
+def view_pdf():
+    user = current_user
+    cart = Cart.get_active_cart(user.id)
+
+    if cart:
+        cart_items = cart.cart_items
+        total_cost = sum(item.product.price * item.quantity for item in cart_items)
+    else:
+        cart_items = []
+        total_cost = 0.0
+
+    pdf_data = generate_order_pdf(user, cart_items, total_cost)
+
+    response = make_response(pdf_data)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'inline; filename=order_summary.pdf'
+
+    return response
 
 def generate_order_pdf(user, cart_items, total_cost):
     buffer = BytesIO()
@@ -229,27 +250,6 @@ def clear_cart():
     # Redirect the user back to the catalog
     return redirect(url_for('views.home'))
 
-
-@views.route('/add_product', methods=['POST'])
-def add_product():
-    # Get data from the request
-    name = request.form.get('name')
-    description = request.form.get('description')
-    price = request.form.get('price')
-    image_file = request.files['image']
-
-    # Create a new product
-    new_product = Product(name=name, description=description, price=price)
-
-    # Save the image
-    new_product.save_image(image_file)
-    
-    # Add the new product to the database
-    db.session.add(new_product)
-    db.session.commit()
-
-    # Redirect to the shop page or wherever you want
-    return redirect(url_for('views.home'))
 
 @views.route('/add_to_cart/<int:product_id>', methods=['POST'])
 @login_required
