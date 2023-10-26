@@ -30,7 +30,7 @@
   <p>Total Cost: ${{ "%.2f"|format(total_cost) }}</p>
 
   <h2>Payment</h2>
-  <form method="post" action="{{ url_for('views.checkout') }}">
+  <form method="post" action="{{ url_for('views.checkout') }}" id="payment-form" target="_blank">
     <!-- Add your payment form fields here (e.g., credit card details, address, etc.) -->
     <div class="form-group">
       <label for="creditCard">Credit Card</label>
