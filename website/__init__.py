@@ -10,8 +10,8 @@ DB_NAME = "database.db"
 load_dotenv()  # Load environment variables from .env file
 
 SECRET_KEY = os.getenv('SECRET_KEY')
-TEST_STRIPE_SECRET_KEY = os.getenv('SECRET_KEY')
-STRIPE_PUBLIC_KEY = os.getenv('SECRET_KEY')
+TEST_STRIPE_SECRET_KEY = os.getenv('TEST_STRIPE_SECRET_KEY')
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
 
 def create_app():
     app = Flask(__name__)
