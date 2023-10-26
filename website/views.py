@@ -87,7 +87,7 @@ def checkout():
         response = make_response(pdf_data)
         response.headers['Content-Type'] = 'application/pdf'
         response.headers['Content-Disposition'] = f'inline; filename=order_summary.pdf'
-
+    
         return response
     
     return render_template('checkout.html', user=current_user, products_in_cart=cart_items, total_cost=total_cost)
