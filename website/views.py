@@ -1,7 +1,8 @@
 from datetime import datetime
-from flask import Blueprint, flash, make_response, render_template, request, redirect, url_for
+from flask import Blueprint, app, flash, make_response, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import func
+import stripe
 from .models import Cart, CartItem, Order, OrderItem, Product, User
 from . import db
 from io import BytesIO
@@ -69,6 +70,18 @@ def checkout():
     total_cost = sum(item.product.price * item.quantity for item in cart_items)
     # Simulate a payment (marking the order as paid)
     if request.method == 'POST':
+        # Create a Payment Intent with Stripe
+        stripe.api_key = app.config['TEST_STRIPE_SECRET_KEY']
+        payment_intent = stripe.PaymentIntent.create(
+            amount=int(total_cost * 100),  # Total cost in cents
+            currency='usd',
+            description='Your Order Description',
+            payment_method_types=['card'],
+        )
+
+        # Pass the client_secret to the template
+        client_secret = payment_intent.client_secret
+
         mark_order_as_paid(current_user, total_cost)
         pdf_data = generate_order_pdf(current_user, cart_items, total_cost)
 
