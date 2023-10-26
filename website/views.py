@@ -52,15 +52,24 @@ def cart():
 def inventory():
     return render_template("inventory.html", user=current_user)
 
-@views.route('/order')
-@login_required # prevents ppl from going to homepage without logging in
-def order():
-    return render_template("order.html", user=current_user)
-
-@views.route('/account')
-@login_required # prevents ppl from going to homepage without logging in
+@views.route('/account', methods=['GET', 'POST'])
+@login_required
 def account():
-    return render_template("account.html", user=current_user)
+    user = current_user
+
+    # Handle form submission if you want to allow users to update their information
+    if request.method == 'POST':
+        # Retrieve form data and update user information as needed
+        user.first_name = request.form.get('first_name')
+        user.last_name = request.form.get('last_name')
+        user.address = request.form.get('address')
+        user.contact_no = request.form.get('contact_no')
+
+        # Commit changes to the database
+        db.session.commit()
+        flash('Your account information has been updated.', 'success')
+
+    return render_template("account.html", user=user)
 
 @views.route('/checkout', methods=['GET', 'POST'])
 @login_required
