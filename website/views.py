@@ -101,7 +101,7 @@ def confirmation():
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'inline; filename=order_summary.pdf'
     
-    return response
+    return render_template("confirmation.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost)
     
 @views.route('/view_pdf')
 def view_pdf():
@@ -142,13 +142,11 @@ def mark_order_as_paid(user, total_cost):
 
     # Commit changes to the database
     db.session.add(new_order)
-    
-    # Clear the user's cart
-    for cart_item in cart_items:
-        db.session.delete(cart_item)
-    
+    db.session.commit()
+
     # Create a new cart for the user
-    create_new_cart(user)
+    new_cart = Cart(customer=user.id)
+    db.session.add(new_cart)
     
     # Commit changes to the database
     db.session.commit()
@@ -214,6 +212,23 @@ def create_new_cart(user):
     db.session.add(new_cart)
     db.session.commit()
     return new_cart
+
+@views.route('/clear_cart')
+@login_required
+def clear_cart():
+    user = current_user
+    # Get the user's active cart
+    cart = Cart.get_active_cart(user.id)
+
+    if cart:
+        # Delete all cart items associated with the cart
+        CartItem.query.filter_by(cart_id=cart.cart_id).delete()
+        # Commit the changes to remove cart items
+        db.session.commit()
+
+    # Redirect the user back to the catalog
+    return redirect(url_for('views.home'))
+
 
 @views.route('/add_product', methods=['POST'])
 def add_product():
