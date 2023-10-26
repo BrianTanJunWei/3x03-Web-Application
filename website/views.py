@@ -1,5 +1,6 @@
+import io
 from datetime import datetime
-from flask import Blueprint, flash, make_response, render_template, request, redirect, url_for
+from flask import Blueprint, flash, make_response, render_template, request, redirect, url_for, send_file
 from flask_login import login_required, current_user
 from sqlalchemy import func
 from .models import Product, User, Cart, CartItem, Order, OrderItem
@@ -57,7 +58,7 @@ def order():
     if account_status == 'staff':
         # Staff members view all orders
         orders = Order.query.all()
-        return render_template("all_orders.html", user=current_user, orders=orders)
+        return render_template("all_orders.html", user=current_user, orders=orders, account_status=account_status)
     else:
         orders = Order.query.filter_by(customer=current_user.id).all()
         print(orders)  # Add this line for debugging
@@ -86,13 +87,15 @@ def order_details(order_id):
 @views.route('/all_orders')
 @login_required  # Use @login_required to ensure only staff members can access this route
 def all_orders():
+    account_status = get_user_role(current_user.id)
     # Add code to fetch all orders from all customers
     orders = Order.query.all()
-    return render_template('all_orders.html', orders=orders)
+    return render_template('all_orders.html', orders=orders, account_status=account_status)
 
 @views.route('/update_order_status/<int:order_id>', methods=['POST'])
 @login_required
 def update_order_status(order_id):
+    account_status = get_user_role(current_user.id)
     # Get the new status from the form
     new_status = request.form.get('new_status')
     
@@ -109,14 +112,46 @@ def update_order_status(order_id):
 
     # Redirect back to the 'all_orders' page
     orders = Order.query.all()  # Fetch all orders again
-    return render_template('all_orders.html', orders=orders, user=current_user)
+    return render_template('all_orders.html', orders=orders, user=current_user, account_status=account_status)
 
+@views.route('/generate_pdf', methods=['GET'])
+def generate_pdf_content():
+    filter_value = request.args.get('filter_value')
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
 
+    # Retrieve order
+    if filter_value == "All" or filter_value == "":
+        orders = Order.query.all()
+        filter_value = "All"
+    else:
+        orders = Order.query.filter_by(order_status=filter_value).all()
+    
+    p.drawString(100, 750, f'Filtered Orders for Status: {filter_value}')
+    y_position = 700  # Initial y-position
+    for order in orders:
+        y_position -= 20  # Move down for each order
+        p.drawString(100, y_position, f'Order ID: {order.order_id}')
+        
+        # Retrieve order items for the current order
+        order_items = OrderItem.query.filter_by(order=order).all()
+        for order_item in order_items:
+            y_position -= 20
+            p.drawString(100, y_position, f'Product Name: {order_item.product.name}')
+            y_position -= 20
+            p.drawString(100, y_position, f'Quantity: {order_item.quantity}')
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+
+    return send_file(buffer, as_attachment=True, download_name='generated_pdf.pdf', mimetype='application/pdf')
 
 @views.route('/account')
 @login_required # prevents ppl from going to homepage without logging in
 def account():
-    return render_template("account.html", user=current_user)
+    account_status = get_user_role(current_user.id)
+    return render_template("account.html", user=current_user, account_status=account_status)
 
 @views.route('/checkout', methods=['GET', 'POST'])
 @login_required
