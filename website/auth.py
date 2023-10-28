@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 from .models import Cart, User
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
@@ -21,6 +21,8 @@ def login():
             if bcrypt.check_password_hash(user.password, password):
                 # Password is correct, log the user in
                 login_user(user, remember=True)
+                account_status = user.account_status
+                session['account_status'] = account_status
                 flash('Logged in successfully!', category='success')
                 return redirect(url_for('views.home'))
             else:

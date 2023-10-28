@@ -1,15 +1,17 @@
+import io
 from datetime import datetime
-from flask import Blueprint, flash, make_response, render_template, request, redirect, url_for
+from flask import Blueprint, flash, make_response, make_response, render_template, request, redirect, url_for, send_file
 from flask_login import login_required, current_user
 from sqlalchemy import func
-from .models import Cart, CartItem, Order, OrderItem, PasswordResetToken, Product, User
+from .models import Cart, CartItem, Order, OrderItem, PasswordResetToken, Product, User, Cart, CartItem, Order, OrderItem
 from . import SENDER_EMAIL, SENDINBLUE_API_KEY, db
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from sqlalchemy.orm import joinedload
 import requests
 from flask_bcrypt import Bcrypt
 
@@ -21,7 +23,11 @@ bcrypt = Bcrypt()
 def home():
     products = Product.query.all()
     account_status = get_user_role(current_user.id)
-    return render_template("catalog.html", user=current_user, products=products, account_status=account_status)
+    if account_status == 'staff':
+        return render_template("staff_catalog.html", user=current_user, account_status=account_status, products=products)
+    else:
+        return render_template("customer_catalog.html", user=current_user, account_status=account_status, products=products)
+
 
 def get_user_role(id):
     user = User.query.get(id)
@@ -33,12 +39,109 @@ def get_user_role(id):
 @views.route('/product/<int:product_id>')
 def view_product(product_id):
     product = Product.query.get(product_id)
-    return render_template('product.html', user=current_user, product=product)
+    account_status = get_user_role(current_user.id)
+    return render_template('product.html', user=current_user, product=product, account_status=account_status)
 
 @views.route('/inventory')
 @login_required # prevents ppl from going to homepage without logging in
 def inventory():
     return render_template("inventory.html", user=current_user)
+
+@views.route('/order')
+@login_required # prevents ppl from going to homepage without logging in
+def order():
+    account_status = get_user_role(current_user.id)
+    if account_status == 'staff':
+        # Staff members view all orders
+        orders = Order.query.all()
+        return render_template("all_orders.html", user=current_user, orders=orders, account_status=account_status)
+    else:
+        orders = Order.query.filter_by(customer=current_user.id).all()
+        print(orders)  # Add this line for debugging
+        return render_template("order.html", user=current_user, orders=orders)
+
+@views.route('/order_details/<int:order_id>')
+@login_required
+def order_details(order_id):
+    order = Order.query.get(order_id)
+
+    if order:
+        # Use joinedload to fetch related order_items and product data in a single query
+        order = (
+            Order.query
+            .filter_by(order_id=order_id)
+            .options(joinedload(Order.order_items).joinedload(OrderItem.product))
+            .first()
+        )
+
+        return render_template('order_details.html', user=current_user, order=order, order_items=order.order_items)
+    else:
+        flash('Order not found', 'danger')
+        return redirect(url_for('views.order_history'))
+
+# staff
+@views.route('/all_orders')
+@login_required  # Use @login_required to ensure only staff members can access this route
+def all_orders():
+    account_status = get_user_role(current_user.id)
+    # Add code to fetch all orders from all customers
+    orders = Order.query.all()
+    return render_template('all_orders.html', orders=orders, account_status=account_status)
+
+@views.route('/update_order_status/<int:order_id>', methods=['POST'])
+@login_required
+def update_order_status(order_id):
+    account_status = get_user_role(current_user.id)
+    # Get the new status from the form
+    new_status = request.form.get('new_status')
+    
+    # Find the order by ID
+    order = Order.query.get(order_id)
+
+    if order:
+        # Update the order status
+        order.order_status = new_status
+        db.session.commit()
+        flash(f'Order status updated to {new_status} for order ID {order_id}.', 'success')
+    else:
+        flash(f'Order with ID {order_id} not found.', 'danger')
+
+    # Redirect back to the 'all_orders' page
+    orders = Order.query.all()  # Fetch all orders again
+    return render_template('all_orders.html', orders=orders, user=current_user, account_status=account_status)
+
+@views.route('/generate_pdf', methods=['GET'])
+def generate_pdf_content():
+    filter_value = request.args.get('filter_value')
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+
+    # Retrieve order
+    if filter_value == "All" or filter_value == "":
+        orders = Order.query.all()
+        filter_value = "All"
+    else:
+        orders = Order.query.filter_by(order_status=filter_value).all()
+    
+    p.drawString(100, 750, f'Filtered Orders for Status: {filter_value}')
+    y_position = 700  # Initial y-position
+    for order in orders:
+        y_position -= 20  # Move down for each order
+        p.drawString(100, y_position, f'Order ID: {order.order_id}')
+        
+        # Retrieve order items for the current order
+        order_items = OrderItem.query.filter_by(order=order).all()
+        for order_item in order_items:
+            y_position -= 20
+            p.drawString(100, y_position, f'Product Name: {order_item.product.name}')
+            y_position -= 20
+            p.drawString(100, y_position, f'Quantity: {order_item.quantity}')
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+
+    return send_file(buffer, as_attachment=True, download_name='generated_pdf.pdf', mimetype='application/pdf')
 
 @views.route('/add_product', methods=['POST'])
 def add_product():
@@ -47,9 +150,10 @@ def add_product():
     description = request.form.get('description')
     price = request.form.get('price')
     image_file = request.files['image']
+    is_hidden = bool(request.form.get('is_hidden'))
 
     # Create a new product
-    new_product = Product(name=name, description=description, price=price)
+    new_product = Product(name=name, description=description, price=price, is_hidden=is_hidden)
 
     # Save the image
     new_product.save_image(image_file)
@@ -61,11 +165,40 @@ def add_product():
     # Redirect to the shop page or wherever you want
     return redirect(url_for('views.home'))
 
+@views.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
+def edit_product(product_id):
+    # Fetch the product to be edited
+    account_status = get_user_role(current_user.id)
+    if account_status == "staff":
+        product = Product.query.get(product_id)
+
+        if request.method == 'POST':
+            # Get the updated data from the form
+            new_name = request.form.get('name')
+            new_description = request.form.get('description')
+            new_price = request.form.get('price')
+            new_is_hidden = bool(request.form.get('is_hidden'))        
+
+            # Update the product's data
+            product.name = new_name
+            product.description = new_description
+            product.price = new_price
+            product.is_hidden = new_is_hidden
+
+            # Commit the changes to the database
+            db.session.commit()
+
+            # Redirect to the product's details page or wherever you want
+            return redirect(url_for('views.home', product_id=product.id))
+    else:
+        flash("You do not have the permission to modify product info!", category="error")
+
+# Route to account page
 @views.route('/account', methods=['GET', 'POST'])
-@login_required
+@login_required # prevents ppl from going to homepage without logging in
 def account():
     user = current_user
-
+    account_status = get_user_role(current_user.id)
     # Handle form submission if you want to allow users to update their information
     if request.method == 'POST':
         # Retrieve form data and update user information as needed
@@ -78,22 +211,39 @@ def account():
         db.session.commit()
         flash('Your account information has been updated.', 'success')
 
-    return render_template("account.html", user=user)
+    return render_template("account.html", user=user, account_status=account_status)
 
 @views.route('/cart')
 @login_required
 def cart():
     user = current_user
+    account_status = get_user_role(current_user.id)
     cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
 
     if cart:
         cart_items = cart.cart_items
+
+        # Remove hidden items from the cart
+        for cart_item in cart_items:
+            product = cart_item.product
+            if product.is_hidden:
+                db.session.delete(cart_item)
+                db.session.commit()
+        
         total_cost = sum(item.product.price * item.quantity for item in cart_items)
+    
     else:
         cart_items = []
         total_cost = 0.0
 
-    return render_template("cart.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost)
+    return render_template("cart.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost, account_status=account_status)
+
+# Define a method to create a new cart
+def create_new_cart(user):
+    new_cart = Cart(user=user)
+    db.session.add(new_cart)
+    db.session.commit()
+    return new_cart
 
 @views.route('/checkout', methods=['GET', 'POST'])
 @login_required
@@ -229,13 +379,6 @@ def generate_order_pdf(user, cart_items, total_cost):
     buffer.close()
 
     return pdf_data
-
-# Define a method to create a new cart
-def create_new_cart(user):
-    new_cart = Cart(user=user)
-    db.session.add(new_cart)
-    db.session.commit()
-    return new_cart
 
 @views.route('/clear_cart')
 @login_required

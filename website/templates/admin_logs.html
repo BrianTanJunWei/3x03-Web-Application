@@ -1,0 +1,42 @@
+{% extends "base.html" %} 
+{% block title %}Logs Management{% endblock %} 
+
+
+{% block content %}
+<br>
+<h1>Logs</h1>
+<br>
+<div>
+    <table class="table" style="width:100%">
+        <tr>
+            <th>ID </th>
+            <th>Level </th>
+            <th>Type </th>
+            <th>Entity </th>
+            <th>Time </th>
+            <th></th>
+        </tr>
+
+        {% for log in logs %}
+        <tr>
+            <td>{{log.log_id}}</td>
+            <td>{{log.log_level}}</td>
+            <td>{{log.log_type}}</td>
+            <td>{{log.entity}}</td>
+            <td>{{log.log_time}}</td>
+            <td>
+                <a class="btn btn-primary" href= "/logs/{{log.log_id}}" > More info </button>
+            </td>
+            
+        </tr>
+        {% endfor %}
+
+    </table>
+
+    <Button class="btn btn-primary btnExport"> Export Logs </button>
+        <script src="static/index.js"></script>
+</div>
+
+
+    
+{% endblock %}

@@ -36,7 +36,7 @@ class Product(db.Model):
     description = db.Column(db.Text, nullable=True)
     price = db.Column(db.Float, nullable=False)
     image = db.Column(db.String(255), nullable=True)
-    
+    is_hidden = db.Column(db.Boolean, default=True)
     # Relationships with CartItem and OrderItem
     cart_items = db.relationship('CartItem', backref='product', lazy=True)
     order_items = db.relationship('OrderItem', backref='product', lazy=True)
@@ -57,7 +57,7 @@ class Product(db.Model):
 # Cart Table
 class Cart(db.Model):
     cart_id = db.Column(db.Integer, primary_key=True)
-    customer = db.Column(db.Integer, db.ForeignKey('user.email'), nullable=False)
+    customer = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
    
     # Relationship with CartItem
@@ -85,6 +85,12 @@ class Order(db.Model):
 
     # Relationship with OrderItem
     order_items = db.relationship('OrderItem', backref='order', lazy=True)
+
+    def calculate_total_cost(self):
+        total_cost = 0.0
+        for order_item in self.order_items:
+            total_cost += order_item.product.price * order_item.quantity
+        return total_cost
 
 # OrderItems Table
 class OrderItem(db.Model):
