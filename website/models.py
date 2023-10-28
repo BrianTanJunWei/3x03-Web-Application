@@ -6,7 +6,11 @@ from sqlalchemy.sql import func
 from PIL import Image
 from io import BytesIO
 from flask import request, current_app
+from datetime import datetime, timedelta
 import os
+import secrets
+import string
+import pytz
 
 # Users Table
 class User(db.Model, UserMixin):
@@ -88,3 +92,24 @@ class OrderItem(db.Model):
     order_id = db.Column(db.Integer, db.ForeignKey('order.order_id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
+    
+class PasswordResetToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    token = db.Column(db.String(100), nullable=False, unique=True)
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def __init__(self, user_id):
+        self.user_id = user_id
+        self.token = generate_unique_token()
+        self.timestamp = datetime.now(pytz.timezone('Asia/Singapore'))
+
+    def is_expired(self):
+        return datetime.utcnow() > self.timestamp + timedelta(minutes=5)
+
+def generate_unique_token(token_length=50):
+    characters = string.ascii_letters + string.digits
+    while True:
+        token = ''.join(secrets.choice(characters) for _ in range(token_length))
+        if not PasswordResetToken.query.filter_by(token=token).first():
+            return token

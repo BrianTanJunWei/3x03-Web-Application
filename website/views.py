@@ -2,16 +2,19 @@ from datetime import datetime
 from flask import Blueprint, flash, make_response, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import func
-from .models import Cart, CartItem, Order, OrderItem, Product, User
-from . import db
+from .models import Cart, CartItem, Order, OrderItem, PasswordResetToken, Product, User
+from . import SENDER_EMAIL, SENDINBLUE_API_KEY, db
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+import requests
+from flask_bcrypt import Bcrypt
 
 views = Blueprint('views', __name__)
+bcrypt = Bcrypt()
 
 @views.route('/')
 @login_required # prevents ppl from going to homepage without logging in
@@ -290,3 +293,94 @@ def remove_from_cart(product_id):
             db.session.commit()
 
     return redirect(url_for('views.cart'))
+
+@views.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    # Find the token in the database
+    password_reset_token = PasswordResetToken.query.filter_by(token=token).first()
+
+    if not password_reset_token:
+        flash("Invalid or expired password reset token.", "danger")
+        return redirect(url_for('auth.login'))  # Redirect to the login page or another appropriate page
+
+    # Check if the token has expired
+    token_age = datetime.now() - password_reset_token.timestamp
+    if token_age.total_seconds() > 300:  # Adjust the expiration time as needed
+        flash("Password reset token has expired. Please request a new one.", "danger")
+        return redirect(url_for('auth.login'))  # Redirect to the login page or another appropriate page
+
+    if request.method == 'POST':
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+
+        if new_password != confirm_password:
+            flash("New password and confirmation do not match.", "danger")
+            return redirect(url_for('views.reset_password', token=token))
+
+        # Hash the new password and update the user's password
+        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+        user = User.query.get(password_reset_token.user_id)
+        user.password = hashed_password
+
+        # Remove the password reset token after a successful password reset
+        db.session.delete(password_reset_token)
+        db.session.commit()
+
+        flash("Password updated successfully.", "success")
+        return redirect(url_for('auth.login'))
+
+    return render_template("reset_password.html")
+
+@views.route('/request_password_reset', methods=['GET', 'POST'])
+def request_password_reset():
+
+    if request.method == 'POST':
+        email = request.form.get('email')
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            # Create a password reset token and save it in the database
+            token = PasswordResetToken(user_id=user.id)
+            db.session.add(token)
+            db.session.commit()
+
+            # Send an email to the user with the password reset link
+            send_password_reset_email(user, token.token)
+
+            flash('An email with instructions to reset your password has been sent.', 'info')
+            return redirect(url_for('auth.login'))
+
+        flash('No user found with this email address.', 'danger')
+
+    return render_template('request_password_reset.html')
+
+def send_password_reset_email(user, token):
+    # Create the email content
+    email_content = f"""
+    <p>Hello {user.first_name},</p>
+    <p>You recently requested to reset your password. Click the link below to reset your password:</p>
+    <p><a href="{request.host_url}reset_password/{token}">Reset Password</a></p>
+    <p>If you didn't make this request, you can ignore this email.</p>
+    <p>Thank you.</p>
+    """
+
+    # Send the email using the SendinBlue API
+    headers = {
+        'api-key': SENDINBLUE_API_KEY,
+        'Content-Type': 'application/json',
+    }
+    data = {
+        'to': [{'email': user.email}],
+        'subject': 'Password Reset Request',
+        'htmlContent': email_content,
+        'sender': {'email': SENDER_EMAIL},
+    }
+
+    try:
+        response = requests.post('https://api.sendinblue.com/v3/smtp/email', headers=headers, json=data)
+        if response.status_code == 201:
+            print("Password reset email sent successfully.")
+        else:
+            print(f"Error sending password reset email: {response.status_code}")
+    except Exception as e:
+        print(f"An error occurred while sending the password reset email: {str(e)}")

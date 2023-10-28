@@ -12,6 +12,7 @@
     <p><strong>Address:</strong> {{ user.address }}</p>
     <p><strong>Contact Number:</strong> {{ user.contact_no }}</p>
     <button id="edit-button" class="btn btn-primary">Edit</button>
+    <a href="{{ url_for('views.request_password_reset') }}">Change Password</a>
   </div>
 
   <div id="edit-form" style="display: none;">
