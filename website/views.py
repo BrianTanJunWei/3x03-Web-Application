@@ -8,6 +8,9 @@ from . import db
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from sqlalchemy.orm import joinedload
 
 views = Blueprint('views', __name__)
@@ -36,20 +39,6 @@ def view_product(product_id):
     account_status = get_user_role(current_user.id)
     return render_template('product.html', user=current_user, product=product, account_status=account_status)
 
-@views.route('/cart')
-@login_required
-def cart():
-    user = current_user
-    cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
-
-    if cart:
-        cart_items = cart.cart_items
-        total_cost = sum(item.product.price * item.quantity for item in cart_items)
-    else:
-        cart_items = []
-        total_cost = 0.0
-
-    return render_template("cart.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost)
 
 @views.route('/order')
 @login_required # prevents ppl from going to homepage without logging in
@@ -147,11 +136,163 @@ def generate_pdf_content():
 
     return send_file(buffer, as_attachment=True, download_name='generated_pdf.pdf', mimetype='application/pdf')
 
-@views.route('/account')
+@views.route('/add_product', methods=['POST'])
+def add_product():
+    # Get data from the request
+    name = request.form.get('name')
+    description = request.form.get('description')
+    price = request.form.get('price')
+    image_file = request.files['image']
+    is_hidden = bool(request.form.get('is_hidden'))
+
+    # Create a new product
+    new_product = Product(name=name, description=description, price=price, is_hidden=is_hidden)
+
+    # Save the image
+    new_product.save_image(image_file)
+    
+    # Add the new product to the database
+    db.session.add(new_product)
+    db.session.commit()
+
+    # Redirect to the shop page or wherever you want
+    return redirect(url_for('views.home'))
+
+@views.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
+def edit_product(product_id):
+    # Fetch the product to be edited
+    account_status = get_user_role(current_user.id)
+    if account_status == "staff":
+        product = Product.query.get(product_id)
+
+        if request.method == 'POST':
+            # Get the updated data from the form
+            new_name = request.form.get('name')
+            new_description = request.form.get('description')
+            new_price = request.form.get('price')
+            new_is_hidden = bool(request.form.get('is_hidden'))        
+
+            # Update the product's data
+            product.name = new_name
+            product.description = new_description
+            product.price = new_price
+            product.is_hidden = new_is_hidden
+
+            # Commit the changes to the database
+            db.session.commit()
+
+            # Redirect to the product's details page or wherever you want
+            return redirect(url_for('views.home', product_id=product.id))
+    else:
+        flash("You do not have the permission to modify product info!", category="error")
+
+# Route to account page
+@views.route('/account', methods=['GET', 'POST'])
 @login_required # prevents ppl from going to homepage without logging in
 def account():
+    user = current_user
     account_status = get_user_role(current_user.id)
-    return render_template("account.html", user=current_user, account_status=account_status)
+    # Handle form submission if you want to allow users to update their information
+    if request.method == 'POST':
+        # Retrieve form data and update user information as needed
+        user.first_name = request.form.get('first_name')
+        user.last_name = request.form.get('last_name')
+        user.address = request.form.get('address')
+        user.contact_no = request.form.get('contact_no')
+
+        # Commit changes to the database
+        db.session.commit()
+        flash('Your account information has been updated.', 'success')
+
+    return render_template("account.html", user=user, account_status=account_status)
+
+@views.route('/cart')
+@login_required
+def cart():
+    user = current_user
+    account_status = get_user_role(current_user.id)
+    cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
+
+    if cart:
+        cart_items = cart.cart_items
+
+        # Remove hidden items from the cart
+        for cart_item in cart_items:
+            product = cart_item.product
+            if product.is_hidden:
+                db.session.delete(cart_item)
+                db.session.commit()
+        
+        total_cost = sum(item.product.price * item.quantity for item in cart_items)
+    
+    else:
+        cart_items = []
+        total_cost = 0.0
+
+    return render_template("cart.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost, account_status=account_status)
+
+# Define a method to create a new cart
+def create_new_cart(user):
+    new_cart = Cart(user=user)
+    db.session.add(new_cart)
+    db.session.commit()
+    return new_cart
+
+@views.route('/clear_cart')
+@login_required
+def clear_cart():
+    user = current_user
+    # Get the user's active cart
+    cart = Cart.get_active_cart(user.id)
+
+    if cart:
+        # Delete all cart items associated with the cart
+        CartItem.query.filter_by(cart_id=cart.cart_id).delete()
+        # Commit the changes to remove cart items
+        db.session.commit()
+
+    # Redirect the user back to the catalog
+    return redirect(url_for('views.home'))
+
+@views.route('/add_to_cart/<int:product_id>', methods=['POST'])
+@login_required
+def add_to_cart(product_id):
+    user = current_user
+    product = Product.query.get(product_id)
+    
+    # Check if the user has an active cart, and create one if it doesn't exist
+    cart = Cart.get_active_cart(user.id)
+    if cart is None:
+        cart = Cart(customer=user.id)
+        db.session.add(cart)
+        db.session.commit()
+        
+    # Add the product to the user's cart
+    cart_item = CartItem(cart_id=cart.cart_id, product_id=product.id, quantity=1)
+    
+    db.session.add(cart_item)
+    db.session.commit()
+    
+    flash(f'{product.name} added to your cart.', 'success')
+    
+    return redirect(url_for('views.home'))
+
+@views.route('/remove_from_cart/<int:product_id>', methods=['GET', 'POST'])
+@login_required
+def remove_from_cart(product_id):
+    user = current_user
+    cart = Cart.get_active_cart(user.id)  # Get the user's active cart
+
+    if cart:
+        product = Product.query.get(product_id)
+        cart_item = CartItem.query.filter_by(cart_id=cart.cart_id, product_id=product_id).first()
+
+        if cart_item:
+            # Remove the cart item and commit the changes
+            db.session.delete(cart_item)
+            db.session.commit()
+
+    return redirect(url_for('views.cart'))
 
 @views.route('/checkout', methods=['GET', 'POST'])
 @login_required
@@ -164,16 +305,27 @@ def checkout():
     # Simulate a payment (marking the order as paid)
     if request.method == 'POST':
         mark_order_as_paid(current_user, total_cost)
-        pdf_data = generate_order_pdf(current_user, cart_items, total_cost)
-
-        response = make_response(pdf_data)
-        response.headers['Content-Type'] = 'application/pdf'
-        response.headers['Content-Disposition'] = f'inline; filename=order_summary.pdf'
-
-        return response
+        
+        return render_template("confirmation.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost)
     
     return render_template('checkout.html', user=current_user, products_in_cart=cart_items, total_cost=total_cost)
 
+@views.route('/confirmation')
+def confirmation():
+    user = current_user
+    cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
+
+    cart_items = cart.cart_items
+    total_cost = sum(item.product.price * item.quantity for item in cart_items)
+
+    pdf_data = generate_order_pdf(current_user, cart_items, total_cost)
+
+    response = make_response(pdf_data)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=order_summary.pdf'
+    
+    return render_template("confirmation.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost)
+    
 def mark_order_as_paid(user, total_cost):
     
     # Create a new order for the user
@@ -200,128 +352,79 @@ def mark_order_as_paid(user, total_cost):
     db.session.add(new_cart)
     
     # Commit changes to the database
-    db.session.commit()
+    db.session.commit()    
+
+@views.route('/view_pdf')
+def view_pdf():
+    user = current_user
+    cart = Cart.get_active_cart(user.id)
+
+    if cart:
+        cart_items = cart.cart_items
+        total_cost = sum(item.product.price * item.quantity for item in cart_items)
+    else:
+        cart_items = []
+        total_cost = 0.0
+
+    pdf_data = generate_order_pdf(user, cart_items, total_cost)
+
+    response = make_response(pdf_data)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'inline; filename=order_summary.pdf'
+
+    return response
 
 def generate_order_pdf(user, cart_items, total_cost):
     buffer = BytesIO()
-    c = canvas.Canvas(buffer, pagesize=letter)
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
 
-    # Customize the PDF layout and content
-    c.setFont("Helvetica", 12)
-    c.drawString(100, 750, "Order Summary")
-    c.drawString(100, 730, f"User: {user.first_name} {user.last_name}")
+    # Create a list to hold PDF elements
+    elements = []
 
-    # Iterate through cart items
-    y = 710  # Starting y-coordinate
+    # Styles for the PDF
+    styles = getSampleStyleSheet()
+
+    # Title
+    title = Paragraph("Order Summary", styles['Title'])
+    elements.append(title)
+
+    # Date
+    current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    date_text = f"Order Date: {current_date}"
+    elements.append(Paragraph(date_text, styles['Normal']))
+    
+    # User information
+    user_info = f"User: {user.first_name} {user.last_name}"
+    if user.address:
+        user_info += f"<br />Address: {user.address}"
+    elements.append(Paragraph(user_info, styles['Normal']))
+    elements.append(Spacer(1, 12))
+
+    # Table to display order details
+    order_data = [["Product", "Quantity", "Price", "Subtotal"]]
     for cart_item in cart_items:
         product = cart_item.product
-        c.drawString(100, y, f"Product: {product.name}")
-        c.drawString(250, y, f"Quantity: {cart_item.quantity}")
-        c.drawString(350, y, f"Price: ${product.price:.2f}")
-        c.drawString(450, y, f"Subtotal: ${cart_item.quantity * product.price:.2f}")
-        y -= 20  
+        order_data.append([product.name, cart_item.quantity, f"${product.price:.2f}", f"${cart_item.quantity * product.price:.2f}"])
+    order_table = Table(order_data)
+    order_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    elements.append(order_table)
+    elements.append(Spacer(1, 12))
 
-    c.drawString(100, y, f"Total Cost: ${total_cost:.2f}")
+    # Total cost
+    total_cost_text = f"Total Cost: ${total_cost:.2f}"
+    elements.append(Paragraph(total_cost_text, styles['Normal']))
 
-    c.showPage()
-    c.save()
+    doc.build(elements)
 
     pdf_data = buffer.getvalue()
     buffer.close()
 
     return pdf_data
-
-# Define a method to create a new cart
-def create_new_cart(user):
-    new_cart = Cart(user=user)
-    db.session.add(new_cart)
-    db.session.commit()
-    return new_cart
-
-@views.route('/add_product', methods=['POST'])
-def add_product():
-    # Get data from the request
-    name = request.form.get('name')
-    description = request.form.get('description')
-    price = request.form.get('price')
-    image_file = request.files['image']
-    is_hidden = bool(request.form.get('is_hidden'))
-
-    # Create a new product
-    new_product = Product(name=name, description=description, price=price, is_hidden=is_hidden)
-
-    # Save the image
-    new_product.save_image(image_file)
-    
-    # Add the new product to the database
-    db.session.add(new_product)
-    db.session.commit()
-
-    # Redirect to the shop page or wherever you want
-    return redirect(url_for('views.home'))
-
-@views.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
-def edit_product(product_id):
-    # Fetch the product to be edited
-    product = Product.query.get(product_id)
-
-    if request.method == 'POST':
-        # Get the updated data from the form
-        new_name = request.form.get('name')
-        new_description = request.form.get('description')
-        new_price = request.form.get('price')
-        new_is_hidden = bool(request.form.get('is_hidden'))        
-
-        # Update the product's data
-        product.name = new_name
-        product.description = new_description
-        product.price = new_price
-        product.is_hidden = new_is_hidden
-
-        # Commit the changes to the database
-        db.session.commit()
-
-        # Redirect to the product's details page or wherever you want
-        return redirect(url_for('views.home', product_id=product.id))
-
-
-@views.route('/add_to_cart/<int:product_id>', methods=['POST'])
-@login_required
-def add_to_cart(product_id):
-    product = Product.query.get(product_id)
-    if product:
-        user = current_user  # Get the current user
-        cart = Cart.get_active_cart(user.id)  # Get the user's active cart
-
-        if cart:
-            # Create a new CartItem and associate it with the user and the product
-            cart_item = CartItem(cart=cart, product=product, quantity=1)
-        else:
-            # If the user doesn't have an active cart, create a new one
-            cart = create_new_cart(user)
-            cart_item = CartItem(cart=cart, product=product, quantity=1)
-
-        db.session.add(cart_item)
-        db.session.commit()
-        flash(f'Added {product.name} to your cart!', 'success')
-    else:
-        flash('Product not found.', 'error')
-    
-    return redirect(url_for('views.home'))
-
-@views.route('/remove_from_cart/<int:product_id>', methods=['GET', 'POST'])
-@login_required
-def remove_from_cart(product_id):
-    user = current_user
-    cart = Cart.get_active_cart(user.id)  # Get the user's active cart
-
-    if cart:
-        product = Product.query.get(product_id)
-        cart_item = CartItem.query.filter_by(cart_id=cart.cart_id, product_id=product_id).first()
-
-        if cart_item:
-            # Remove the cart item and commit the changes
-            db.session.delete(cart_item)
-            db.session.commit()
-
-    return redirect(url_for('views.cart'))

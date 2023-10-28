@@ -43,6 +43,9 @@ def sign_up():
     if request.method == 'POST':
         email = request.form.get('email')
         first_name = request.form.get('firstName')
+        last_name = request.form.get('lastName')
+        address = request.form.get('address')
+        contact_number = request.form.get('contactNumber')
         password1 = request.form.get('password1')
         password2 = request.form.get('password2')
         # check if user exist
@@ -54,13 +57,16 @@ def sign_up():
             flash('Invalid email', category='error')
         elif len(first_name) < 2:
             flash('Invalid first name', category='error')
+        elif len(last_name) < 2:
+            flash('Invalid first name', category='error')
         elif password1 != password2:
             flash('Passwords does not match', category='error')
         elif len(password1) < 7:
             flash('Password must be at least 7 character', category='error')
         else:
             hashed_password = bcrypt.generate_password_hash(password1).decode('utf-8')
-            new_user = User(email=email, first_name=first_name, password=hashed_password)
+            new_user = User(email=email, first_name=first_name, last_name=last_name, address=address, contact_no=contact_number, password=hashed_password)
+            
             db.session.add(new_user)
             db.session.commit()
             
