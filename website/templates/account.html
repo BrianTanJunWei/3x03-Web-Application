@@ -1,5 +1,59 @@
-{% extends "customerBase.html" %} {% block title %}Account{% endblock %} 
+{% extends 'customerBase.html' %}
+
+{% block title %}Account{% endblock %}
 
 {% block content %}
-<h1>This is the page for viewing of profile</h1>
+  <h1>Account</h1>
+
+  <h2>Your Account Information</h2>
+  <div id="account-details">
+    <p><strong>First Name:</strong> {{ user.first_name }}</p>
+    <p><strong>Last Name:</strong> {{ user.last_name }}</p>
+    <p><strong>Address:</strong> {{ user.address }}</p>
+    <p><strong>Contact Number:</strong> {{ user.contact_no }}</p>
+    <button id="edit-button" class="btn btn-primary">Edit</button>
+    <a href="{{ url_for('views.request_password_reset') }}">Change Password</a>
+  </div>
+
+  <div id="edit-form" style="display: none;">
+    <form method="post">
+      <div class="form-group">
+        <label for="first_name">First Name</label>
+        <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}">
+      </div>
+      <div class="form-group">
+        <label for="last_name">Last Name</label>
+        <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}">
+      </div>
+      <div class="form-group">
+        <label for="address">Address</label>
+        <textarea class="form-control" id="address" name="address">{{ user.address }}</textarea>
+      </div>
+      <div class="form-group">
+        <label for="contact_no">Contact Number</label>
+        <input type="text" class="form-control" id="contact_no" name="contact_no" value="{{ user.contact_no }}">
+      </div>
+      <button type="submit" class="btn btn-primary">Update Information</button>
+      <button id="cancel-button" class="btn btn-secondary">Cancel</button>
+    </form>
+  </div>
+
+  <script>
+    const accountDetails = document.getElementById('account-details');
+    const editForm = document.getElementById('edit-form');
+    const editButton = document.getElementById('edit-button');
+    const cancelButton = document.getElementById('cancel-button');
+
+    editButton.addEventListener('click', () => {
+      accountDetails.style.display = 'none';
+      editForm.style.display = 'block';
+    });
+
+    cancelButton.addEventListener('click', () => {
+      accountDetails.style.display = 'block';
+      editForm.style.display = 'none';
+    });
+  </script>
+</div>
+
 {% endblock %}

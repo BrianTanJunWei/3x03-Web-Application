@@ -59,6 +59,8 @@ def sign_up():
             flash('Invalid email', category='error')
         elif len(first_name) < 2:
             flash('Invalid first name', category='error')
+        elif len(last_name) < 2:
+            flash('Invalid first name', category='error')
         elif password1 != password2:
             flash('Passwords does not match', category='error')
         elif len(password1) < 7:

@@ -6,20 +6,42 @@
   <h1>Your Cart</h1>
   
   {% if products_in_cart %}
-    <ul>
-      {% for product in products_in_cart %}
-        <li>
-          <span>{{ product.name }} - ${{ "%.2f"|format(product.price) }}</span>
-          <a href="{{ url_for('views.remove_from_cart', product_id=product.id) }}">Remove</a>
-        </li>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Product Name</th>
+        <th>Price</th>
+        <th>Quantity</th>
+        <th>Total</th>
+        <th>Remove</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in products_in_cart %}
+      <tr>
+        <td>{{ item.product.name }}</td>
+        <td>${{ "%.2f"|format(item.product.price) }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>${{ "%.2f"|format(item.product.price * item.quantity) }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('views.remove_from_cart', product_id=item.product.id) }}">
+            <button type="submit" class="btn btn-danger">Remove</button>
+          </form>
+        </td>
+      </tr>
       {% endfor %}
-    </ul>
-  
-    <h3>Total Cost: ${{ "%.2f"|format(total_cost) }}</h3>
-  
+    </tbody>
+  </table>
+
+  <h3>Total Cost: ${{ "%.2f"|format(total_cost) }}</h3>
+
     <a href="{{ url_for('views.checkout') }}" class="btn btn-primary">Checkout</a>
     <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
+
   {% else %}
+
     <p>Your cart is empty.</p>
+    <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
+    
   {% endif %}
 {% endblock %}

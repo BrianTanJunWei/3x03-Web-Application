@@ -10,10 +10,18 @@ DB_NAME = "database.db"
 load_dotenv()  # Load environment variables from .env file
 
 SECRET_KEY = os.getenv('SECRET_KEY')
+TEST_STRIPE_SECRET_KEY = os.getenv('TEST_STRIPE_SECRET_KEY')
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
+SENDINBLUE_API_KEY = os.getenv('SENDINBLUE_API_KEY')
+SENDER_EMAIL = os.getenv('SENDER_EMAIL')
 
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = SECRET_KEY
+    app.config['TEST_STRIPE_SECRET_KEY'] = TEST_STRIPE_SECRET_KEY
+    app.config['STRIPE_PUBLIC_KEY'] = STRIPE_PUBLIC_KEY
+    app.config['SENDINBLUE_API_KEY'] = SENDINBLUE_API_KEY
+    app.config['SENDER_EMAIL'] = SENDER_EMAIL
 
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     app.config['UPLOAD_FOLDER'] = 'uploads'
