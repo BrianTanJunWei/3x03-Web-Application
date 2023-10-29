@@ -18,15 +18,18 @@ def login():
         # search db 
         user = Login.query.filter_by(email_address=email).first()
         if user:
-            # Verify the password using the stored salt and hashed password
-            if bcrypt.check_password_hash(user.password, password):
-                # Password is correct, log the user in
-                login_user(user, remember=True)
-                flash('Logged in successfully!', category='success')
-                # TODO: insert check for user account type here
-                return redirect(url_for('views.home'))
+            if user.account_status == False:
+                flash('Account locked out, please contact the administrator', category="error")
             else:
-                flash('Incorrect email or password. Try again', category='error')
+                # Verify the password using the stored salt and hashed password
+                if bcrypt.check_password_hash(user.password, password):
+                    # Password is correct, log the user in
+                    login_user(user, remember=True)
+                    flash('Logged in successfully!', category='success')
+                    # TODO: insert check for user account type here
+                    return redirect(url_for('views.home'))
+                else:
+                    flash('Incorrect email or password. Try again', category='error')
         else:
             flash('User not found. Check your email.', category='error')
     

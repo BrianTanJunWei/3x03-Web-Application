@@ -77,6 +77,45 @@ def staffaccounts():
             valid = 0
         return render_template("admin_accounts.html", user=current_user, users=users, staff=staff, valid=valid)
     
+@views.route('/staffaccounts/<staff_id>')
+@login_required
+def view_staff(staff_id):
+    user_type = current_user.account_type
+    valid = 1
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        staff = StaffAccounts.query.get(staff_id)
+        staffinfo = Login.query.filter_by(email_address=staff_id).first()
+        if (staff is None):
+            valid = 0
+        if (staffinfo is None):
+            valid = 0
+        return render_template("admin_staff_details.html", user=current_user, staff=staff, staffinfo=staffinfo, valid=valid)
+
+@views.route('/staffdisable/<staff_id>')
+@login_required
+def disable_staff(staff_id):
+    user_type = current_user.account_type
+    valid = 1
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        staff = StaffAccounts.query.get(staff_id)
+        staffinfo = Login.query.filter_by(email_address=staff_id).first()
+        if (staff is None or staffinfo is None):
+            valid = 0
+            return redirect(url_for('views.home'))
+        else:
+            if(staffinfo.account_status == True):
+                staffinfo.account_status = False
+            else:
+                staffinfo.account_status = True
+            db.session.commit()
+            return render_template("admin_staff_details.html", user=current_user, staff=staff, staffinfo=staffinfo, valid=valid)
+
+
+           
 
 @views.route('/download_logs_api')
 @login_required
