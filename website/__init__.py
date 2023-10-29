@@ -16,6 +16,8 @@ def create_app():
     app.config['SECRET_KEY'] = SECRET_KEY
 
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
+    app.config['UPLOAD_FOLDER'] = 'uploads'
+
     db.init_app(app)
    
     from .views import views
@@ -24,7 +26,7 @@ def create_app():
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    from .models import Login, UserAccounts, AdminAccounts, StaffAccounts
+    from .models import Login, UserAccounts, AdminAccounts, StaffAccounts, User,Product
 
     create_database(app)
 

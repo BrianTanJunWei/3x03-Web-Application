@@ -8,7 +8,6 @@ from flask_bcrypt import Bcrypt
 auth = Blueprint('auth', __name__)
 bcrypt = Bcrypt()
 
-
 @auth.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
@@ -34,7 +33,6 @@ def login():
             flash('User not found. Check your email.', category='error')
     
     return render_template("login.html", user=current_user)    
-
 
 @auth.route('/logout')
 @login_required
