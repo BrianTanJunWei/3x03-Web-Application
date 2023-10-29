@@ -3,6 +3,11 @@
 {% block title %}Account{% endblock %}
 
 {% block content %}
+  <style>
+    .hide-form {
+      display: none;
+    }
+  </style>
   <h1>Account</h1>
 
   <h2>Your Account Information</h2>
@@ -15,7 +20,7 @@
     <a href="{{ url_for('views.request_password_reset') }}">Change Password</a>
   </div>
 
-  <div id="edit-form" style="display: none;">
+  <div id="edit-form" class="hide-form">
     <form method="post">
       <div class="form-group">
         <label for="first_name">First Name</label>
@@ -33,7 +38,7 @@
         <label for="contact_no">Contact Number</label>
         <input type="text" class="form-control" id="contact_no" name="contact_no" value="{{ user.contact_no }}">
       </div>
-      <button type="submit" class="btn btn-primary">Update Information</button>
+      <button type="submit" class="btn btn-primary" >Update Information</button>
       <button id="cancel-button" class="btn btn-secondary">Cancel</button>
     </form>
   </div>
