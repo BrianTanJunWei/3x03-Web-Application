@@ -31,7 +31,7 @@
         <div class="navbar-nav">
           <!-- Testing role based navbar -->
             {% if user.is_authenticated %}
-            {% if (return_user_type(user.id)) == 0 %}
+            {% if account_status == 0 %}
             <a class="nav-item nav-link" id="shop" href="/">Shop</a>
             <a class="nav-item nav-link" id="order" href="/order">Order</a>
             <a class="nav-item nav-link" id="logs" href="/logs">Logs</a>
@@ -39,7 +39,7 @@
             <a class="nav-item nav-link" id="staffcreate" href="/adminstaffcreation">Create Staff Account</a>
             <a class="nav-item nav-link" id="logout" href="/logout">Logout</a>
             {% endif %}
-            {% if (return_user_type(user.id)) == 1 %}
+            {% if account_status == 1 %}
             <a class="nav-item nav-link" id="shop" href="/">Shop</a>
             <a class="nav-item nav-link" id="catalog" href="/">Catalog</a>
             <a class="nav-item nav-link" id="cart" href="/cart">Cart</a>
@@ -47,7 +47,7 @@
             <a class="nav-item nav-link" id="account" href="/account">Account</a>
             <a class="nav-item nav-link" id="logout" href="/logout">Logout</a>
             {% endif %}
-            {% if (return_user_type(user.id)) == 2 %}
+            {% if account_status == 2 %}
             <a class="nav-item nav-link" id="shop" href="/">Shop</a>
             <a class="nav-item nav-link" id="order" href="/order">Order</a>
             <a class="nav-item nav-link" id="account" href="/account">Account</a>

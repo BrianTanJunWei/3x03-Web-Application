@@ -6,7 +6,11 @@ from sqlalchemy.sql import func
 from PIL import Image
 from io import BytesIO
 from flask import request, current_app
+from datetime import datetime, timedelta
 import os
+import secrets
+import string
+import pytz
 
 
 class Login(db.Model, UserMixin):
@@ -23,9 +27,7 @@ class UserAccounts(db.Model):
     first_name = db.Column(db.String(150))
     last_name = db.Column(db.String(150))
     contact_no = db.Column(db.Integer)
-    cart = db.relationship("Product", back_populates="users")
-    carts = db.relationship("Cart", back_populates="customer")
-    orders = db.relationship("Order", back_populates="customer")
+    
 
 class StaffAccounts(db.Model):
     email_address = db.Column(db.String(150),primary_key=True)
@@ -51,11 +53,9 @@ class Product(db.Model):
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
     price = db.Column(db.Float, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     image = db.Column(db.String(255), nullable=True)
-    users = db.relationship("User", back_populates="cart")
-    cart_items = db.relationship("CartItem", back_populates="product")
-    order_items = db.relationship("OrderItem", back_populates="product")
+    is_hidden = db.Column(db.Boolean, default=True)
+   
     
     def __repr__(self):
         return f"Product('{self.name}', '{self.price}')"
@@ -72,30 +72,62 @@ class Product(db.Model):
             
 class Cart(db.Model):
     cart_id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    customer = db.relationship('User', back_populates='carts')
-    cart_items = db.relationship("CartItem", back_populates="cart")
+    customer = db.Column(db.Integer, nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+   
     
+    @classmethod
+    def get_active_cart(cls, user_id):
+        return cls.query.filter_by(customer=user_id, is_active=True).first()
+    
+# CartItems Table
 class CartItem(db.Model):
-    cart_id = db.Column(db.Integer, db.ForeignKey('cart.cart_id'), primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), primary_key=True)
-    quantity = db.Column(db.Integer)
-    cart = db.relationship('Cart', back_populates='cart_items')
-    product = db.relationship('Product', back_populates='cart_items')
+    cart_item_id = db.Column(db.Integer, primary_key=True)
+    cart_id = db.Column(db.Integer)
+    product_id = db.Column(db.Integer, nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
     
+    
+# Order Table
 class Order(db.Model):
     order_id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    order_status = db.Column(db.String(20), default="processing")  # Default value can be set as needed
-    placed_date = db.Column(db.Date)
-    shipped_date = db.Column(db.Date)
-    delivered_date = db.Column(db.Date)
-    customer = db.relationship('User', back_populates='orders')
-    order_items = db.relationship('OrderItem', back_populates='order')
+    customer = db.Column(db.Integer, nullable=False)
+    order_status = db.Column(db.String(20))
+    placed_date = db.Column(db.DateTime)
+    shipped_date = db.Column(db.DateTime)
+    delivered_date = db.Column(db.DateTime)
 
+    def calculate_total_cost(self):
+        total_cost = 0.0
+        for order_item in self.order_items:
+            total_cost += order_item.product.price * order_item.quantity
+        return total_cost
+
+# OrderItems Table
 class OrderItem(db.Model):
-    order_id = db.Column(db.Integer, db.ForeignKey('order.order_id'), primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), primary_key=True)
-    quantity = db.Column(db.Integer)
-    order = db.relationship('Order', back_populates='order_items')
-    product = db.relationship('Product', back_populates='order_items')
+    order_item_id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, nullable=False)
+    product_id = db.Column(db.Integer, nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+
+
+class PasswordResetToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    token = db.Column(db.String(100), nullable=False, unique=True)
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def __init__(self, user_id):
+        self.user_id = user_id
+        self.token = generate_unique_token()
+        self.timestamp = datetime.now(pytz.timezone('Asia/Singapore'))
+
+    def is_expired(self):
+        return datetime.utcnow() > self.timestamp + timedelta(minutes=5)
+
+def generate_unique_token(token_length=50):
+    characters = string.ascii_letters + string.digits
+    while True:
+        token = ''.join(secrets.choice(characters) for _ in range(token_length))
+        if not PasswordResetToken.query.filter_by(token=token).first():
+            return token
