@@ -9,7 +9,7 @@
 <div class="row">
   {% for product in products %}
   <!-- ... existing product card code ... -->
-  {% if not product.is_hidden or account_status == "staff" %}
+  {% if not product.is_hidden or account_status == 2%}
   <div class="col-lg-4 col-md-6 col-sm-12">
     <a href="{{ url_for('views.view_product', product_id=product.id) }}" class="card-link">
       <div class="card">

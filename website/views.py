@@ -24,7 +24,8 @@ bcrypt = Bcrypt()
 def home():
     products = Product.query.all()
     account_status = (current_user.account_type)
-    if account_status == 0:
+    print (account_status)
+    if account_status == 0 or 1:
         return render_template("staff_catalog.html", user=current_user, account_status=account_status, products=products)
     else:
         return render_template("customer_catalog.html", user=current_user, account_status=account_status, products=products)
@@ -34,7 +35,7 @@ def home():
 @views.route('/product/<int:product_id>')
 def view_product(product_id):
     product = Product.query.get(product_id)
-    account_status = v
+    account_status = (current_user.account_type)
     return render_template('product.html', user=current_user, product=product, account_status=account_status)
 
 @views.route('/inventory')
@@ -46,14 +47,14 @@ def inventory():
 @login_required # prevents ppl from going to homepage without logging in
 def order():
     account_status = (current_user.account_type)
-    if account_status == 'staff':
+    if account_status == 0 or 1:
         # Staff members view all orders
         orders = Order.query.all()
         return render_template("all_orders.html", user=current_user, orders=orders, account_status=account_status)
     else:
         orders = Order.query.filter_by(customer=current_user.id).all()
         print(orders)  # Add this line for debugging
-        return render_template("order.html", user=current_user, orders=orders)
+        return render_template("order.html", user=current_user, orders=orders,account_status=account_status)
 
 @views.route('/order_details/<int:order_id>')
 @login_required
@@ -158,7 +159,7 @@ def add_product():
     db.session.commit()
 
     # Redirect to the shop page or wherever you want
-    return redirect(url_for('views.shop'))
+    return redirect(url_for('views.home'))
 
 @views.route('/logs')
 @login_required
@@ -327,7 +328,7 @@ def edit_product(product_id):
 @views.route('/account', methods=['GET', 'POST'])
 @login_required # prevents ppl from going to homepage without logging in
 def account():
-    user = current_user
+    user = UserAccounts.query.filter_by(email_address=current_user.email_address).first()
     account_status = (current_user.account_type)
     # Handle form submission if you want to allow users to update their information
     if request.method == 'POST':
@@ -341,7 +342,7 @@ def account():
         db.session.commit()
         flash('Your account information has been updated.', 'success')
 
-    return render_template("account.html", user=user, account_status=account_status)
+    return render_template("account.html", user=current_user, userinfo=user, account_status=account_status)
 
 @views.route('/cart')
 @login_required
