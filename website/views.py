@@ -3,9 +3,10 @@ from datetime import datetime
 from flask import Blueprint, flash, make_response, make_response, render_template, request, redirect, url_for, send_file
 from flask_login import login_required, current_user
 from sqlalchemy import func
-from .models import Cart, CartItem, Order, OrderItem, PasswordResetToken, Product, User, Cart, CartItem, Order, OrderItem
+from .models import *
 from . import SENDER_EMAIL, SENDINBLUE_API_KEY, db
 from io import BytesIO
+import xlsxwriter
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
@@ -22,24 +23,19 @@ bcrypt = Bcrypt()
 @login_required # prevents ppl from going to homepage without logging in
 def home():
     products = Product.query.all()
-    account_status = get_user_role(current_user.id)
-    if account_status == 'staff':
+    account_status = (current_user.account_type)
+    print (account_status)
+    if account_status == 0 or 1:
         return render_template("staff_catalog.html", user=current_user, account_status=account_status, products=products)
     else:
         return render_template("customer_catalog.html", user=current_user, account_status=account_status, products=products)
-
-
-def get_user_role(id):
-    user = User.query.get(id)
-    if user:
-        return user.account_status
-    else:
-        return 'guest'
     
+
+
 @views.route('/product/<int:product_id>')
 def view_product(product_id):
     product = Product.query.get(product_id)
-    account_status = get_user_role(current_user.id)
+    account_status = (current_user.account_type)
     return render_template('product.html', user=current_user, product=product, account_status=account_status)
 
 @views.route('/inventory')
@@ -50,15 +46,15 @@ def inventory():
 @views.route('/order')
 @login_required # prevents ppl from going to homepage without logging in
 def order():
-    account_status = get_user_role(current_user.id)
-    if account_status == 'staff':
+    account_status = (current_user.account_type)
+    if account_status == 0 or 1:
         # Staff members view all orders
         orders = Order.query.all()
         return render_template("all_orders.html", user=current_user, orders=orders, account_status=account_status)
     else:
         orders = Order.query.filter_by(customer=current_user.id).all()
         print(orders)  # Add this line for debugging
-        return render_template("order.html", user=current_user, orders=orders)
+        return render_template("order.html", user=current_user, orders=orders,account_status=account_status)
 
 @views.route('/order_details/<int:order_id>')
 @login_required
@@ -83,7 +79,7 @@ def order_details(order_id):
 @views.route('/all_orders')
 @login_required  # Use @login_required to ensure only staff members can access this route
 def all_orders():
-    account_status = get_user_role(current_user.id)
+    account_status = (current_user.account_type)
     # Add code to fetch all orders from all customers
     orders = Order.query.all()
     return render_template('all_orders.html', orders=orders, account_status=account_status)
@@ -91,7 +87,7 @@ def all_orders():
 @views.route('/update_order_status/<int:order_id>', methods=['POST'])
 @login_required
 def update_order_status(order_id):
-    account_status = get_user_role(current_user.id)
+    account_status = (current_user.account_type)
     # Get the new status from the form
     new_status = request.form.get('new_status')
     
@@ -165,10 +161,145 @@ def add_product():
     # Redirect to the shop page or wherever you want
     return redirect(url_for('views.home'))
 
+@views.route('/logs')
+@login_required
+def logs():
+    user_type = current_user.account_type
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        logs = Logs.query.all()
+        return render_template("admin_logs.html", user=current_user, logs=logs)
+    
+@views.route('/logs/<logs_id>')
+@login_required
+def view_log(logs_id):
+    user_type = current_user.account_type
+    valid = 1
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        logs = Logs.query.get(logs_id)
+        if (logs is None):
+            valid = 0
+        return render_template("admin_log_details.html", user=current_user, logs=logs, valid=valid)
+
+@views.route('/staffaccounts')
+@login_required
+def staffaccounts():
+    user_type = current_user.account_type
+    valid = 1
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        staff = StaffAccounts.query.all()
+        users = Login.query.all()
+        if (staff is None or users is None):
+            valid = 0
+        return render_template("admin_accounts.html", user=current_user, users=users, staff=staff, valid=valid)
+    
+@views.route('/staffaccounts/<staff_id>')
+@login_required
+def view_staff(staff_id):
+    user_type = current_user.account_type
+    valid = 1
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        staff = StaffAccounts.query.get(staff_id)
+        staffinfo = Login.query.filter_by(email_address=staff_id).first()
+        if (staff is None):
+            valid = 0
+        if (staffinfo is None):
+            valid = 0
+        return render_template("admin_staff_details.html", user=current_user, staff=staff, staffinfo=staffinfo, valid=valid)
+
+@views.route('/staffdisable/<staff_id>')
+@login_required
+def disable_staff(staff_id):
+    user_type = current_user.account_type
+    valid = 1
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        staff = StaffAccounts.query.get(staff_id)
+        staffinfo = Login.query.filter_by(email_address=staff_id).first()
+        if (staff is None or staffinfo is None):
+            valid = 0
+            return redirect(url_for('views.home'))
+        else:
+            if(staffinfo.account_status == True):
+                staffinfo.account_status = False
+            else:
+                staffinfo.account_status = True
+            db.session.commit()
+            return render_template("admin_staff_details.html", user=current_user, staff=staff, staffinfo=staffinfo, valid=valid)
+
+
+           
+
+@views.route('/download_logs_api')
+@login_required
+def downloadLogs():
+    user_type = current_user.account_type
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        apiResponse = createApiResponse()
+        return apiResponse
+    
+def createApiResponse():
+    bufferFile = writeBufferExcelFile()
+    mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    return send_file(bufferFile, mimetype=mimetype)
+
+def writeBufferExcelFile():
+    buffer = BytesIO()
+    workbook = xlsxwriter.Workbook(buffer)
+    worksheet = workbook.add_worksheet()
+    logs = Logs.query.all()
+
+    worksheet.write(0,0,"Log ID")
+    worksheet.write(0,1,"Log Level")
+    worksheet.write(0,2,"Log Type")
+    worksheet.write(0,3,"Entity")
+    worksheet.write(0,4,"Log Description")
+    worksheet.write(0,5,"Log Time")
+    worksheet.write(0,6,"Account Type")
+    worksheet.write(0,7, "Account ID")
+    worksheet.write(0,8,"Affected ID")
+
+    vert = 1
+    hor = 0
+    for item in logs:
+        worksheet.write(vert, hor, item.log_id)
+        hor +=1
+        worksheet.write(vert,hor, item.log_level)
+        hor +=1
+        worksheet.write(vert,hor, item.log_type)
+        hor +=1
+        worksheet.write(vert,hor, item.entity)
+        hor +=1
+        worksheet.write(vert,hor, item.log_desc)
+        hor +=1
+        worksheet.write(vert,hor, item.log_time)
+        hor +=1
+        worksheet.write(vert,hor, item.account_type)
+        hor +=1
+        worksheet.write(vert,hor, item.account_id)
+        hor +=1
+        worksheet.write(vert,hor, item.affected_id)
+        vert+=1
+        hor = 0
+    
+    workbook.close()
+    buffer.seek(0)
+    return buffer
+
 @views.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
 def edit_product(product_id):
     # Fetch the product to be edited
-    account_status = get_user_role(current_user.id)
+    account_status = (current_user.account_type)
     if account_status == "staff":
         product = Product.query.get(product_id)
 
@@ -197,9 +328,8 @@ def edit_product(product_id):
 @views.route('/account', methods=['GET', 'POST'])
 @login_required # prevents ppl from going to homepage without logging in
 def account():
-    user = current_user
-    account_status = get_user_role(current_user.id)
-    
+    user = UserAccounts.query.filter_by(email_address=current_user.email_address).first()
+    account_status = (current_user.account_type)
     # Handle form submission if you want to allow users to update their information
     if request.method == 'POST':
         
@@ -212,13 +342,13 @@ def account():
         # Commit changes to the database
         db.session.commit()
 
-    return render_template("account.html", user=user, account_status=account_status)
+    return render_template("account.html", user=current_user, userinfo=user, account_status=account_status)
 
 @views.route('/cart')
 @login_required
 def cart():
     user = current_user
-    account_status = get_user_role(current_user.id)
+    account_status = (current_user.account_type)
     cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
 
     if cart:

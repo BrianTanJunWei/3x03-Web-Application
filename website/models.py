@@ -12,24 +12,42 @@ import secrets
 import string
 import pytz
 
-# Users Table
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(255), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
-    address = db.Column(db.String(255))
-    first_name = db.Column(db.String(50))
-    last_name = db.Column(db.String(50))
-    contact_no = db.Column(db.String(15))
-    account_status = db.Column(db.String(20))
-    
-    # Relationship with Cart
-    cart = db.relationship('Cart', backref='user', lazy=True)
 
-    # Relationship with Order
-    orders = db.relationship('Order', backref='user', lazy=True)
- 
-# Product Table   
+class Login(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    email_address = db.Column(db.String(150), unique=True)
+    password = db.Column(db.String(150))
+    account_status = db.Column(db.Boolean)
+    account_type = db.Column(db.Integer)
+    failedLoginCounter = db.Column(db.Integer, default=0)
+
+class UserAccounts(db.Model):
+    email_address = db.Column(db.String(150), primary_key=True)
+    address = db.Column(db.String(150))
+    first_name = db.Column(db.String(150))
+    last_name = db.Column(db.String(150))
+    contact_no = db.Column(db.Integer)
+    
+
+class StaffAccounts(db.Model):
+    email_address = db.Column(db.String(150),primary_key=True)
+    name = db.Column(db.String(150))
+
+class AdminAccounts(db.Model):
+    email_address = db.Column(db.String(150),primary_key=True)
+    name = db.Column(db.String(150))
+
+class Logs(db.Model):
+    log_id = db.Column(db.Integer, primary_key=True)
+    log_level = db.Column(db.String(150))
+    log_type = db.Column(db.String(150))
+    entity = db.Column(db.String(150))
+    log_desc = db.Column(db.String(150))
+    log_time = db.Column(db.DateTime)
+    account_type = db.Column(db.String(150))
+    account_id = db.Column(db.String(150))
+    affected_id = db.Column(db.String(150))
+
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -37,9 +55,7 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     image = db.Column(db.String(255), nullable=True)
     is_hidden = db.Column(db.Boolean, default=True)
-    # Relationships with CartItem and OrderItem
-    cart_items = db.relationship('CartItem', backref='product', lazy=True)
-    order_items = db.relationship('OrderItem', backref='product', lazy=True)
+   
     
     def __repr__(self):
         return f"Product('{self.name}', '{self.price}')"
@@ -54,14 +70,11 @@ class Product(db.Model):
             image_data = output.getvalue()
             self.image = base64.b64encode(image_data).decode('utf-8')
             
-# Cart Table
 class Cart(db.Model):
     cart_id = db.Column(db.Integer, primary_key=True)
-    customer = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    customer = db.Column(db.Integer, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
    
-    # Relationship with CartItem
-    cart_items = db.relationship('CartItem', backref='cart', lazy=True)
     
     @classmethod
     def get_active_cart(cls, user_id):
@@ -70,21 +83,19 @@ class Cart(db.Model):
 # CartItems Table
 class CartItem(db.Model):
     cart_item_id = db.Column(db.Integer, primary_key=True)
-    cart_id = db.Column(db.Integer, db.ForeignKey('cart.cart_id'))
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    cart_id = db.Column(db.Integer)
+    product_id = db.Column(db.Integer, nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
+    
     
 # Order Table
 class Order(db.Model):
     order_id = db.Column(db.Integer, primary_key=True)
-    customer = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    customer = db.Column(db.Integer, nullable=False)
     order_status = db.Column(db.String(20))
     placed_date = db.Column(db.DateTime)
     shipped_date = db.Column(db.DateTime)
     delivered_date = db.Column(db.DateTime)
-
-    # Relationship with OrderItem
-    order_items = db.relationship('OrderItem', backref='order', lazy=True)
 
     def calculate_total_cost(self):
         total_cost = 0.0
@@ -95,13 +106,14 @@ class Order(db.Model):
 # OrderItems Table
 class OrderItem(db.Model):
     order_item_id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer, db.ForeignKey('order.order_id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    order_id = db.Column(db.Integer, nullable=False)
+    product_id = db.Column(db.Integer, nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-    
+
+
 class PasswordResetToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
     token = db.Column(db.String(100), nullable=False, unique=True)
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
