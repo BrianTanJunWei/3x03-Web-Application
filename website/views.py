@@ -202,15 +202,15 @@ def account():
     
     # Handle form submission if you want to allow users to update their information
     if request.method == 'POST':
-        if request.form['submit_button'] == 'edit':
-            # Handle form submission for the "Edit Information" button
-            user.first_name = request.form.get('first_name')
-            user.last_name = request.form.get('last_name')
-            user.address = request.form.get('address')
-            user.contact_no = request.form.get('contact_no')
-            
-            # Commit changes to the database
-            db.session.commit()
+        
+        # Handle form submission for the "Edit Information" button
+        user.first_name = request.form.get('first_name')
+        user.last_name = request.form.get('last_name')
+        user.address = request.form.get('address')
+        user.contact_no = request.form.get('contact_no')
+        
+        # Commit changes to the database
+        db.session.commit()
 
     return render_template("account.html", user=user, account_status=account_status)
 
