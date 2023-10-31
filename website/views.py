@@ -25,7 +25,7 @@ def home():
     products = Product.query.all()
     account_status = (current_user.account_type)
     print (account_status)
-    if account_status in (0,1):
+    if account_status == 1:
         return render_template("staff_catalog.html", user=current_user, account_status=account_status, products=products)
     else:
         return render_template("customer_catalog.html", user=current_user, account_status=account_status, products=products)
@@ -36,17 +36,14 @@ def view_product(product_id):
     account_status = (current_user.account_type)
     return render_template('product.html', user=current_user, product=product, account_status=account_status)
 
-@views.route('/inventory')
-@login_required # prevents ppl from going to homepage without logging in
-def inventory():
-    return render_template("inventory.html", user=current_user)
-
 @views.route('/order')
 @login_required # prevents ppl from going to homepage without logging in
 def order():
     account_status = (current_user.account_type)
-    if account_status in (0 , 1):
+    if account_status == 1:
         # Staff members view all orders
+        customer_first_name = ""  # Define it here with an initial value
+        total_cost = 0.0  # Define total_cost here with an initial value
         orders = Order.query.all()
         for order in orders:
             customer = Login.query.get(order.customer)
@@ -55,6 +52,7 @@ def order():
         return render_template("all_orders.html", user=current_user, orders=orders, customer_first_name=customer_first_name, account_status=account_status, total_cost=total_cost)
     else:
         orders = Order.query.filter_by(customer=current_user.id).all()
+        total_cost = 0.0
         for order in orders:
             total_cost = calculate_total_cost(order)
         return render_template("order.html", user=current_user, orders=orders,account_status=account_status, total_cost=total_cost)
@@ -91,27 +89,28 @@ def order_details(order_id):
 @login_required
 def update_order_status(order_id):
     account_status = (current_user.account_type)
-    # Get the new status from the form
-    new_status = request.form.get('new_status')
+    if account_status == 1:
+        # Get the new status from the form
+        new_status = request.form.get('new_status')
     
-    # Find the order by ID
-    order = Order.query.get(order_id)
+        # Find the order by ID
+        order = Order.query.get(order_id)
 
-    if order:
-        # Update the order status
-        order.order_status = new_status
-        db.session.commit()
-        flash(f'Order status updated to {new_status} for order ID {order_id}.', 'success')
-    else:
-        flash(f'Order with ID {order_id} not found.', 'danger')
+        if order:
+            # Update the order status
+            order.order_status = new_status
+            db.session.commit()
+            flash(f'Order status updated to {new_status} for order ID {order_id}.', 'success')
+        else:
+            flash(f'Order with ID {order_id} not found.', 'danger')
 
-    # Redirect back to the 'all_orders' page
-    orders = Order.query.all()  # Fetch all orders again
-    for order in orders:
+        # Redirect back to the 'all_orders' page
+        orders = Order.query.all()  # Fetch all orders again
+        for order in orders:
             customer = Login.query.get(order.customer)
             customer_first_name = UserAccounts.query.get(customer.email_address).first_name
             total_cost = calculate_total_cost(order)
-    return render_template('all_orders.html', orders=orders, user=current_user, customer_first_name=customer_first_name, account_status=account_status, total_cost=total_cost)
+        return render_template('all_orders.html', orders=orders, user=current_user, customer_first_name=customer_first_name, account_status=account_status, total_cost=total_cost)
 
 @views.route('/generate_pdf', methods=['GET'])
 def generate_pdf_content():
@@ -150,170 +149,69 @@ def generate_pdf_content():
 
 @views.route('/add_product', methods=['POST'])
 def add_product():
-    # Get data from the request
-    name = request.form.get('name')
-    description = request.form.get('description')
-    price = request.form.get('price')
-    image_file = request.files['image']
-    is_hidden = bool(request.form.get('is_hidden'))
+    account_status = (current_user.account_type)
+    if account_status == 1:
+        # Get data from the request
+        name = request.form.get('name')
+        description = request.form.get('description')
+        price = request.form.get('price')
+        image_file = request.files['image']
+        is_hidden = bool(request.form.get('is_hidden'))
 
-    # Create a new product
-    new_product = Product(name=name, description=description, price=price, is_hidden=is_hidden)
+        # Create a new product
+        new_product = Product(name=name, description=description, price=price, is_hidden=is_hidden)
 
-    # Save the image
-    new_product.save_image(image_file)
+        # Save the image
+        new_product.save_image(image_file)
     
-    # Add the new product to the database
-    db.session.add(new_product)
-    db.session.commit()
+        # Add the new product to the database
+        db.session.add(new_product)
+        db.session.commit()
+        flash(f'{new_product.name} with the price of ${new_product.price} have been added to the catalog.', 'success')
 
-    # Redirect to the shop page or wherever you want
-    return redirect(url_for('views.home'))
+        # Redirect to the shop page or wherever you want
+        return redirect(url_for('views.home'))
+    else:
+        flash("You do not have the permission to add product!", category="error")
 
-@views.route('/logs')
-@login_required
-def logs():
+@views.route('/remove_product/<int:product_id>', methods=['POST'])
+def remove_product(product_id):
+    # Check the user's account status
     account_status = (current_user.account_type)
-    user = current_user
-    user_type = current_user.account_type
-    if(user_type != 0):
-        return redirect(url_for('views.home'))
-    else:
-        logs = Logs.query.all()
-        return render_template("admin_logs.html", user=current_user, logs=logs, account_status=account_status)
-    
-@views.route('/logs/<logs_id>')
-@login_required
-def view_log(logs_id):
-    account_status = (current_user.account_type)
-    user = current_user
-    user_type = current_user.account_type
-    valid = 1
-    if(user_type != 0):
-        return redirect(url_for('views.home'))
-    else:
-        logs = Logs.query.get(logs_id)
-        if (logs is None):
-            valid = 0
-        return render_template("admin_log_details.html", user=current_user, logs=logs, valid=valid, account_status=account_status)
 
-@views.route('/staffaccounts')
-@login_required
-def staffaccounts():
-    account_status = (current_user.account_type)
-    user = current_user
-    user_type = current_user.account_type
-    valid = 1
-    if(user_type != 0):
-        return redirect(url_for('views.home'))
-    else:
-        staff = StaffAccounts.query.all()
-        users = Login.query.all()
-        if (staff is None or users is None):
-            valid = 0
-        return render_template("admin_accounts.html", user=current_user, users=users, staff=staff, valid=valid, account_status=account_status)
-    
-@views.route('/staffaccounts/<staff_id>')
-@login_required
-def view_staff(staff_id):
-    account_status = (current_user.account_type)
-    user_type = current_user.account_type
-    valid = 1
-    if(user_type != 0):
-        return redirect(url_for('views.home'))
-    else:
-        staff = StaffAccounts.query.get(staff_id)
-        staffinfo = Login.query.filter_by(email_address=staff_id).first()
-        if (staff is None):
-            valid = 0
-        if (staffinfo is None):
-            valid = 0
-        return render_template("admin_staff_details.html", user=current_user, staff=staff, staffinfo=staffinfo, valid=valid, account_status=account_status)
+    if account_status == 1:
+        # Retrieve the product to be removed from the database
+        product_to_remove = Product.query.get(product_id)
 
-@views.route('/staffdisable/<staff_id>')
-@login_required
-def disable_staff(staff_id):
-    user_type = current_user.account_type
-    valid = 1
-    if(user_type != 0):
-        return redirect(url_for('views.home'))
-    else:
-        staff = StaffAccounts.query.get(staff_id)
-        staffinfo = Login.query.filter_by(email_address=staff_id).first()
-        if (staff is None or staffinfo is None):
-            valid = 0
+        if product_to_remove:
+            product_name = product_to_remove.name
+            # Check for related cart items
+            cart_items = CartItem.query.filter_by(product_id=product_id).all()
+            if cart_items:
+                # Remove related cart items
+                for cart_item in cart_items:
+                    db.session.delete(cart_item)
+            
+            # Perform the removal
+            db.session.delete(product_to_remove)
+            db.session.commit()
+
+            flash(f'{product_name} have been removed from the catalog.', 'success')
+
+            # Redirect to the catalog or another appropriate page
             return redirect(url_for('views.home'))
         else:
-            if(staffinfo.account_status == True):
-                staffinfo.account_status = False
-            else:
-                staffinfo.account_status = True
-            db.session.commit()
-            return render_template("admin_staff_details.html", user=current_user, staff=staff, staffinfo=staffinfo, valid=valid)
-
-@views.route('/download_logs_api')
-@login_required
-def downloadLogs():
-    user_type = current_user.account_type
-    if(user_type != 0):
-        return redirect(url_for('views.home'))
+            flash("Product not found.", category="error")
     else:
-        apiResponse = createApiResponse()
-        return apiResponse
-    
-def createApiResponse():
-    bufferFile = writeBufferExcelFile()
-    mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    return send_file(bufferFile, mimetype=mimetype)
+        flash("You do not have the permission to remove products.", category="error")
 
-def writeBufferExcelFile():
-    buffer = BytesIO()
-    workbook = xlsxwriter.Workbook(buffer)
-    worksheet = workbook.add_worksheet()
-    logs = Logs.query.all()
-
-    worksheet.write(0,0,"Log ID")
-    worksheet.write(0,1,"Log Level")
-    worksheet.write(0,2,"Log Type")
-    worksheet.write(0,3,"Entity")
-    worksheet.write(0,4,"Log Description")
-    worksheet.write(0,5,"Log Time")
-    worksheet.write(0,6,"Account Type")
-    worksheet.write(0,7, "Account ID")
-    worksheet.write(0,8,"Affected ID")
-
-    vert = 1
-    hor = 0
-    for item in logs:
-        worksheet.write(vert, hor, item.log_id)
-        hor +=1
-        worksheet.write(vert,hor, item.log_level)
-        hor +=1
-        worksheet.write(vert,hor, item.log_type)
-        hor +=1
-        worksheet.write(vert,hor, item.entity)
-        hor +=1
-        worksheet.write(vert,hor, item.log_desc)
-        hor +=1
-        worksheet.write(vert,hor, item.log_time)
-        hor +=1
-        worksheet.write(vert,hor, item.account_type)
-        hor +=1
-        worksheet.write(vert,hor, item.account_id)
-        hor +=1
-        worksheet.write(vert,hor, item.affected_id)
-        vert+=1
-        hor = 0
-    
-    workbook.close()
-    buffer.seek(0)
-    return buffer
+    return redirect(url_for('views.catalog'))
 
 @views.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
 def edit_product(product_id):
     # Fetch the product to be edited
     account_status = (current_user.account_type)
-    if account_status in (0,1):
+    if account_status == 1:
         product = Product.query.get(product_id)
 
         if request.method == 'POST':
@@ -331,7 +229,8 @@ def edit_product(product_id):
 
             # Commit the changes to the database
             db.session.commit()
-
+            flash(f'{product.name} have been successfully modified.', 'success')
+            
             # Redirect to the product's details page or wherever you want
             return redirect(url_for('views.home', product_id=product.id))
     else:
@@ -370,13 +269,16 @@ def cart():
     if cart:
         # Query the CartItem model to get cart items associated with the cart
         cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
- 
+
         cart_items_with_products = []
 
         for cart_item in cart_items:
             product = Product.query.get(cart_item.product_id)
             if product and not product.is_hidden:
                 cart_items_with_products.append((cart_item, product))
+            else:
+                db.session.delete(cart_item)
+                db.session.commit()
                 
         total_cost = sum(product.price * cart_item.quantity for cart_item, _ in cart_items_with_products)
         
@@ -680,3 +582,146 @@ def send_password_reset_email(user, token):
             print(f"Error sending password reset email: {response.status_code}")
     except Exception as e:
         print(f"An error occurred while sending the password reset email: {str(e)}")
+
+
+
+
+# admin - useless
+@views.route('/logs')
+@login_required
+def logs():
+    account_status = (current_user.account_type)
+    user = current_user
+    user_type = current_user.account_type
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        logs = Logs.query.all()
+        return render_template("admin_logs.html", user=current_user, logs=logs, account_status=account_status)
+    
+@views.route('/logs/<logs_id>')
+@login_required
+def view_log(logs_id):
+    account_status = (current_user.account_type)
+    user = current_user
+    user_type = current_user.account_type
+    valid = 1
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        logs = Logs.query.get(logs_id)
+        if (logs is None):
+            valid = 0
+        return render_template("admin_log_details.html", user=current_user, logs=logs, valid=valid, account_status=account_status)
+
+@views.route('/staffaccounts')
+@login_required
+def staffaccounts():
+    account_status = (current_user.account_type)
+    user = current_user
+    user_type = current_user.account_type
+    valid = 1
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        staff = StaffAccounts.query.all()
+        users = Login.query.all()
+        if (staff is None or users is None):
+            valid = 0
+        return render_template("admin_accounts.html", user=current_user, users=users, staff=staff, valid=valid, account_status=account_status)
+    
+@views.route('/staffaccounts/<staff_id>')
+@login_required
+def view_staff(staff_id):
+    account_status = (current_user.account_type)
+    user_type = current_user.account_type
+    valid = 1
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        staff = StaffAccounts.query.get(staff_id)
+        staffinfo = Login.query.filter_by(email_address=staff_id).first()
+        if (staff is None):
+            valid = 0
+        if (staffinfo is None):
+            valid = 0
+        return render_template("admin_staff_details.html", user=current_user, staff=staff, staffinfo=staffinfo, valid=valid, account_status=account_status)
+
+@views.route('/staffdisable/<staff_id>')
+@login_required
+def disable_staff(staff_id):
+    user_type = current_user.account_type
+    valid = 1
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        staff = StaffAccounts.query.get(staff_id)
+        staffinfo = Login.query.filter_by(email_address=staff_id).first()
+        if (staff is None or staffinfo is None):
+            valid = 0
+            return redirect(url_for('views.home'))
+        else:
+            if(staffinfo.account_status == True):
+                staffinfo.account_status = False
+            else:
+                staffinfo.account_status = True
+            db.session.commit()
+            return render_template("admin_staff_details.html", user=current_user, staff=staff, staffinfo=staffinfo, valid=valid)
+
+@views.route('/download_logs_api')
+@login_required
+def downloadLogs():
+    user_type = current_user.account_type
+    if(user_type != 0):
+        return redirect(url_for('views.home'))
+    else:
+        apiResponse = createApiResponse()
+        return apiResponse
+    
+def createApiResponse():
+    bufferFile = writeBufferExcelFile()
+    mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    return send_file(bufferFile, mimetype=mimetype)
+
+def writeBufferExcelFile():
+    buffer = BytesIO()
+    workbook = xlsxwriter.Workbook(buffer)
+    worksheet = workbook.add_worksheet()
+    logs = Logs.query.all()
+
+    worksheet.write(0,0,"Log ID")
+    worksheet.write(0,1,"Log Level")
+    worksheet.write(0,2,"Log Type")
+    worksheet.write(0,3,"Entity")
+    worksheet.write(0,4,"Log Description")
+    worksheet.write(0,5,"Log Time")
+    worksheet.write(0,6,"Account Type")
+    worksheet.write(0,7, "Account ID")
+    worksheet.write(0,8,"Affected ID")
+
+    vert = 1
+    hor = 0
+    for item in logs:
+        worksheet.write(vert, hor, item.log_id)
+        hor +=1
+        worksheet.write(vert,hor, item.log_level)
+        hor +=1
+        worksheet.write(vert,hor, item.log_type)
+        hor +=1
+        worksheet.write(vert,hor, item.entity)
+        hor +=1
+        worksheet.write(vert,hor, item.log_desc)
+        hor +=1
+        worksheet.write(vert,hor, item.log_time)
+        hor +=1
+        worksheet.write(vert,hor, item.account_type)
+        hor +=1
+        worksheet.write(vert,hor, item.account_id)
+        hor +=1
+        worksheet.write(vert,hor, item.affected_id)
+        vert+=1
+        hor = 0
+    
+    workbook.close()
+    buffer.seek(0)
+    return buffer
