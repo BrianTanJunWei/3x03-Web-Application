@@ -325,7 +325,7 @@ def confirmation():
 def mark_order_as_paid(user, total_cost):
     
     # Create a new order for the user
-    new_order = Order(customer=user.id, order_status='paid', placed_date=datetime.now())
+    new_order = Order(customer=user.id, order_status='Paid', placed_date=datetime.now())
 
     cart = Cart.get_active_cart(user.id)
     # Retrieve the products from the user's current cart

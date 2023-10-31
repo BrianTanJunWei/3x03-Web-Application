@@ -3,11 +3,13 @@
 {% block title %}All Orders{% endblock %}
 
 {% block content %}
+{% if account_status == "staff" %}
   <h1>All Orders</h1>
   <div class="form-group">
     <label for="filter_status">Filter by Status:</label>
     <select class="form-control" id="filter_status">
         <option value="">All</option>
+        <option value="Paid">Paid</option>
         <option value="Processing">Processing</option>
         <option value="Shipped">Shipped</option>
         <option value="Delivered">Delivered</option>
@@ -98,6 +100,6 @@
         window.location = `/generate_pdf?filter_value=${filterValue}`;
     });
   </script>
-  
+{% endif %}
 {% endblock %}
 

@@ -22,7 +22,7 @@ def login():
                 # Password is correct, log the user in
                 login_user(user, remember=True)
                 account_status = user.account_status
-                session['account_status'] = account_status
+                # session['account_status'] = account_status
                 flash('Logged in successfully!', category='success')
                 return redirect(url_for('views.home'))
             else:
@@ -69,7 +69,7 @@ def sign_up():
 
             db.session.commit()
             
-            login_user(new_user, remember=True) # allows user to stay logged in
+            login_user(new_user, remember=True)
 
             flash('Sign up completed!', category='success')
             return redirect(url_for('views.home'))
