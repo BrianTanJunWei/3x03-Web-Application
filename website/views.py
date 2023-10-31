@@ -375,7 +375,7 @@ def create_new_cart(user):
     db.session.commit()
     return new_cart
 
-#doing
+#done
 @views.route('/checkout', methods=['GET', 'POST'])
 @login_required
 def checkout():
@@ -417,26 +417,25 @@ def confirmation():
     
     return render_template("confirmation.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost)
     
+#doing
 def mark_order_as_paid(user, total_cost):
     
     # Create a new order for the user
-    new_order = Order(customer=user.id, order_status='paid', placed_date=datetime.now())
-
-    cart = Cart.get_active_cart(user.id)
-    # Retrieve the products from the user's current cart
-    cart_items = cart.cart_items
-
-    for cart_item in cart_items:
-        # Create an order item for each product in the cart
-        order_item = OrderItem(order=new_order, product=cart_item.product, quantity=cart_item.quantity)
-        db.session.add(order_item)
-
-    # Mark the order as shipped (or do any other relevant processing)
-    new_order.shipped_date = datetime.now()
+    new_order = Order(customer=user.id, order_status='Paid', placed_date=datetime.now())
 
     # Commit changes to the database
     db.session.add(new_order)
     db.session.commit()
+    
+    print(new_order.order_id)
+    cart = Cart.get_active_cart(user.id)
+    # Retrieve the products from the user's current cart
+    cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
+
+    for cart_item in cart_items:
+        # Create an order item for each product in the cart
+        order_item = OrderItem(order_id=new_order.order_id, product_id=cart_item.product_id, quantity=cart_item.quantity)
+        db.session.add(order_item)
 
     # Create a new cart for the user
     new_cart = Cart(customer=user.id)
