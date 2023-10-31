@@ -16,12 +16,12 @@
       </tr>
     </thead>
     <tbody>
-      {% for item in products_in_cart %}
+      {% for cart_item, product in cart_items_with_products %}
         <tr>
-          <td>{{ item.product.name }}</td>
-          <td>{{ item.quantity }}</td>
-          <td>${{ "%.2f"|format(item.product.price) }}</td>
-          <td>${{ "%.2f"|format(item.product.price * item.quantity) }}</td>
+          <td>{{ product.name }}</td>
+          <td>${{ "%.2f"|format(product.price) }}</td>
+          <td>{{ cart_item.quantity }}</td>
+          <td>${{ "%.2f"|format(product.price * cart_item.quantity) }}</td>
         </tr>
       {% endfor %}
     </tbody>

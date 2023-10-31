@@ -339,13 +339,15 @@ def account():
 
     return render_template("account.html", user=current_user, userinfo=user, account_status=account_status)
 
-# doing
+#done
 @views.route('/cart')
 @login_required
 def cart():
     user = current_user
     account_status = (current_user.account_type)
-    cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
+    
+    # Use the get_active_cart method from your models
+    cart = Cart.get_active_cart(user.id)  
 
     if cart:
         # Query the CartItem model to get cart items associated with the cart
@@ -359,7 +361,7 @@ def cart():
                 cart_items_with_products.append((cart_item, product))
                 
         total_cost = sum(product.price * cart_item.quantity for cart_item, _ in cart_items_with_products)
-        print(cart_items_with_products)
+        
     else:   
         cart_items_with_products = []
         total_cost = 0.0
@@ -373,21 +375,31 @@ def create_new_cart(user):
     db.session.commit()
     return new_cart
 
+#doing
 @views.route('/checkout', methods=['GET', 'POST'])
 @login_required
 def checkout():
     user = current_user
     cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
 
-    cart_items = cart.cart_items
-    total_cost = sum(item.product.price * item.quantity for item in cart_items)
+    cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
+    
+    cart_items_with_products = []
+    
+    for cart_item in cart_items:
+            product = Product.query.get(cart_item.product_id)
+            if product and not product.is_hidden:
+                cart_items_with_products.append((cart_item, product))
+                
+    total_cost = sum(product.price * cart_item.quantity for cart_item, _ in cart_items_with_products)
+
     # Simulate a payment (marking the order as paid)
     if request.method == 'POST':
         mark_order_as_paid(current_user, total_cost)
         
-        return render_template("confirmation.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost)
+        return render_template("confirmation.html", user=current_user, cart_items_with_products=cart_items_with_products, total_cost=total_cost)
     
-    return render_template('checkout.html', user=current_user, products_in_cart=cart_items, total_cost=total_cost)
+    return render_template('checkout.html', user=current_user, cart_items_with_products=cart_items_with_products, total_cost=total_cost)
 
 @views.route('/confirmation')
 def confirmation():
