@@ -97,12 +97,6 @@ class Order(db.Model):
     shipped_date = db.Column(db.DateTime)
     delivered_date = db.Column(db.DateTime)
 
-    def calculate_total_cost(self):
-        total_cost = 0.0
-        for order_item in self.order_items:
-            total_cost += order_item.product.price * order_item.quantity
-        return total_cost
-
 # OrderItems Table
 class OrderItem(db.Model):
     order_item_id = db.Column(db.Integer, primary_key=True)

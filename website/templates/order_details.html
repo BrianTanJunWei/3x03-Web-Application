@@ -4,7 +4,7 @@
 
 {% block content %}
   <h1>Order Details</h1>
-  <p>Order Date: {{ order.placed_date }}</p>
+  <p>Order Date: {{ order.placed_date.strftime('%Y-%m-%d %H:%M:%S') }}</p>
   <p>Order Status: {{ order.order_status }}</p>
 
   {% if order_items %}
@@ -18,18 +18,19 @@
         </tr>
       </thead>
       <tbody>
-        {% for item in order_items %}
+        {% for order_item, product in order_items_with_products %}
           <tr>
-            <td>{{ item.product.name }}</td>
-            <td>${{ "%.2f"|format(item.product.price) }}</td>
-            <td>{{ item.quantity }}</td>
-            <td>${{ "%.2f"|format(item.quantity * item.product.price) }}</td>
+            <td>{{ product.name }}</td>
+            <td>${{ "%.2f"|format(product.price) }}</td>
+            <td>{{ order_item.quantity }}</td>
+            <td>${{ "%.2f"|format(order_item.quantity * product.price) }}</td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
-    <p>Total Cost: ${{ "%.2f"|format(order.calculate_total_cost()) }}</p>
+    <p>Total Cost: ${{ "%.2f"|format(total_cost) }}</p>
   {% else %}
     <p>No items in this order.</p>
   {% endif %}
+  <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
 {% endblock %}

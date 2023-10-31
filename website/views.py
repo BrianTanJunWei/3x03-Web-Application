@@ -45,14 +45,25 @@ def inventory():
 @login_required # prevents ppl from going to homepage without logging in
 def order():
     account_status = (current_user.account_type)
-    if account_status == 0 or 1:
+    if account_status in (0 , 1):
         # Staff members view all orders
         orders = Order.query.all()
-        return render_template("all_orders.html", user=current_user, orders=orders, account_status=account_status)
+        for order in orders:
+            total_cost = calculate_total_cost(order)
+        return render_template("all_orders.html", user=current_user, orders=orders, account_status=account_status, total_cost=total_cost)
     else:
         orders = Order.query.filter_by(customer=current_user.id).all()
-        print(orders)  # Add this line for debugging
-        return render_template("order.html", user=current_user, orders=orders,account_status=account_status)
+        for order in orders:
+            total_cost = calculate_total_cost(order)
+        return render_template("order.html", user=current_user, orders=orders,account_status=account_status, total_cost=total_cost)
+
+def calculate_total_cost(order):
+    total_cost = 0.0
+    order_items = OrderItem.query.filter_by(order_id=order.order_id).all()
+    for order_item in order_items:
+        product = Product.query.get(order_item.product_id)
+        total_cost += product.price * order_item.quantity
+    return total_cost
 
 @views.route('/order_details/<int:order_id>')
 @login_required
@@ -60,15 +71,15 @@ def order_details(order_id):
     order = Order.query.get(order_id)
 
     if order:
-        # Use joinedload to fetch related order_items and product data in a single query
-        order = (
-            Order.query
-            .filter_by(order_id=order_id)
-            .options(joinedload(Order.order_items).joinedload(OrderItem.product))
-            .first()
-        )
+        order_items = OrderItem.query.filter_by(order_id=order_id).all()
+        
+        order_items_with_products = []
+        for order_item in order_items:
+            product = Product.query.get(order_item.product_id)
+            order_items_with_products.append((order_item, product))
 
-        return render_template('order_details.html', user=current_user, order=order, order_items=order.order_items)
+        total_cost = calculate_total_cost(order)
+        return render_template('order_details.html', user=current_user, order=order, order_items_with_products=order_items_with_products, order_items=order_items, total_cost=total_cost)
     else:
         flash('Order not found', 'danger')
         return redirect(url_for('views.order_history'))
@@ -80,7 +91,9 @@ def all_orders():
     account_status = (current_user.account_type)
     # Add code to fetch all orders from all customers
     orders = Order.query.all()
-    return render_template('all_orders.html', orders=orders, account_status=account_status)
+    for order in orders:
+            total_cost = calculate_total_cost(order)
+    return render_template('all_orders.html', orders=orders, account_status=account_status, total_cost=total_cost)
 
 @views.route('/update_order_status/<int:order_id>', methods=['POST'])
 @login_required
@@ -604,7 +617,7 @@ def reset_password(token):
 
         # Hash the new password and update the user's password
         hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
-        user = User.query.get(password_reset_token.user_id)
+        user = UserAccounts.query.get(password_reset_token.user_id)
         user.password = hashed_password
 
         # Remove the password reset token after a successful password reset
@@ -621,7 +634,7 @@ def request_password_reset():
 
     if request.method == 'POST':
         email = request.form.get('email')
-        user = User.query.filter_by(email=email).first()
+        user = UserAccounts.query.filter_by(email=email).first()
 
         if user:
             # Create a password reset token and save it in the database

@@ -31,7 +31,7 @@
           <td>{{ order.order_id }}</td>
           <td>{{ order.user.first_name }}</td>
           <td>{{ order.placed_date }}</td>
-          <td>${{ "%.2f"|format(order.calculate_total_cost()) }}</td>
+          <td>${{ "%.2f"|format(total_cost) }}</td>
           <td>{{ order.order_status }}</td>
           <td>
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#orderModal{{ order.order_id }}">
