@@ -70,6 +70,7 @@ def calculate_total_cost(order):
 @views.route('/order_details/<int:order_id>')
 @login_required
 def order_details(order_id):
+    account_status = (current_user.account_type)
     order = Order.query.get(order_id)
 
     if order:
@@ -172,16 +173,20 @@ def add_product():
 @views.route('/logs')
 @login_required
 def logs():
+    account_status = (current_user.account_type)
+    user = current_user
     user_type = current_user.account_type
     if(user_type != 0):
         return redirect(url_for('views.home'))
     else:
         logs = Logs.query.all()
-        return render_template("admin_logs.html", user=current_user, logs=logs)
+        return render_template("admin_logs.html", user=current_user, logs=logs, account_status=account_status)
     
 @views.route('/logs/<logs_id>')
 @login_required
 def view_log(logs_id):
+    account_status = (current_user.account_type)
+    user = current_user
     user_type = current_user.account_type
     valid = 1
     if(user_type != 0):
@@ -190,11 +195,13 @@ def view_log(logs_id):
         logs = Logs.query.get(logs_id)
         if (logs is None):
             valid = 0
-        return render_template("admin_log_details.html", user=current_user, logs=logs, valid=valid)
+        return render_template("admin_log_details.html", user=current_user, logs=logs, valid=valid, account_status=account_status)
 
 @views.route('/staffaccounts')
 @login_required
 def staffaccounts():
+    account_status = (current_user.account_type)
+    user = current_user
     user_type = current_user.account_type
     valid = 1
     if(user_type != 0):
@@ -204,11 +211,12 @@ def staffaccounts():
         users = Login.query.all()
         if (staff is None or users is None):
             valid = 0
-        return render_template("admin_accounts.html", user=current_user, users=users, staff=staff, valid=valid)
+        return render_template("admin_accounts.html", user=current_user, users=users, staff=staff, valid=valid, account_status=account_status)
     
 @views.route('/staffaccounts/<staff_id>')
 @login_required
 def view_staff(staff_id):
+    account_status = (current_user.account_type)
     user_type = current_user.account_type
     valid = 1
     if(user_type != 0):
@@ -220,7 +228,7 @@ def view_staff(staff_id):
             valid = 0
         if (staffinfo is None):
             valid = 0
-        return render_template("admin_staff_details.html", user=current_user, staff=staff, staffinfo=staffinfo, valid=valid)
+        return render_template("admin_staff_details.html", user=current_user, staff=staff, staffinfo=staffinfo, valid=valid, account_status=account_status)
 
 @views.route('/staffdisable/<staff_id>')
 @login_required

@@ -96,6 +96,7 @@ def sign_up():
 @auth.route('/adminstaffcreation', methods=['GET', 'POST'])
 @login_required
 def create_staff():
+    account_status = (current_user.account_type)
     user_type = current_user.account_type
     if(user_type != 0):
         return redirect(url_for('views.home'))
@@ -129,4 +130,4 @@ def create_staff():
                 flash('Staff Account Created!', category='success')
                 return redirect(url_for('views.staffaccounts'))
 
-        return render_template("admin_create_staff.html", user=current_user)
+        return render_template("admin_create_staff.html", user=current_user, account_status=account_status)
