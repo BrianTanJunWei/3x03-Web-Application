@@ -339,7 +339,7 @@ def account():
 
     return render_template("account.html", user=current_user, userinfo=user, account_status=account_status)
 
-# not done yet
+# doing
 @views.route('/cart')
 @login_required
 def cart():
@@ -348,22 +348,23 @@ def cart():
     cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
 
     if cart:
-        cart_items = cart.cart_items
+        # Query the CartItem model to get cart items associated with the cart
+        cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
+ 
+        cart_items_with_products = []
 
-        # Remove hidden items from the cart
         for cart_item in cart_items:
-            product = cart_item.product
-            if product.is_hidden:
-                db.session.delete(cart_item)
-                db.session.commit()
-        
-        total_cost = sum(item.product.price * item.quantity for item in cart_items)
-    
-    else:
-        cart_items = []
+            product = Product.query.get(cart_item.product_id)
+            if product and not product.is_hidden:
+                cart_items_with_products.append((cart_item, product))
+                
+        total_cost = sum(product.price * cart_item.quantity for cart_item, _ in cart_items_with_products)
+        print(cart_items_with_products)
+    else:   
+        cart_items_with_products = []
         total_cost = 0.0
 
-    return render_template("cart.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost, account_status=account_status)
+    return render_template("cart.html", user=current_user, cart_items_with_products=cart_items_with_products, total_cost=total_cost, account_status=account_status)
 
 # Define a method to create a new cart
 def create_new_cart(user):
