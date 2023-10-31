@@ -30,7 +30,7 @@
         <tr>
           <td>{{ order.order_id }}</td>
           <td>{{ customer_first_name }}</td>
-          <td>{{ order.placed_date }}</td>
+          <td>{{ order.placed_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
           <td>${{ "%.2f"|format(total_cost) }}</td>
           <td>{{ order.order_status }}</td>
           <td>
