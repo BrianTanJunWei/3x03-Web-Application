@@ -339,7 +339,7 @@ def account():
 
     return render_template("account.html", user=current_user, userinfo=user, account_status=account_status)
 
-#done
+
 @views.route('/cart')
 @login_required
 def cart():
@@ -375,7 +375,7 @@ def create_new_cart(user):
     db.session.commit()
     return new_cart
 
-#done
+
 @views.route('/checkout', methods=['GET', 'POST'])
 @login_required
 def checkout():
@@ -387,9 +387,9 @@ def checkout():
     cart_items_with_products = []
     
     for cart_item in cart_items:
-            product = Product.query.get(cart_item.product_id)
-            if product and not product.is_hidden:
-                cart_items_with_products.append((cart_item, product))
+        product = Product.query.get(cart_item.product_id)
+        if product and not product.is_hidden:
+            cart_items_with_products.append((cart_item, product))
                 
     total_cost = sum(product.price * cart_item.quantity for cart_item, _ in cart_items_with_products)
 
@@ -406,7 +406,7 @@ def confirmation():
     user = current_user
     cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
 
-    cart_items = cart.cart_items
+    cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
     total_cost = sum(item.product.price * item.quantity for item in cart_items)
 
     pdf_data = generate_order_pdf(current_user, cart_items, total_cost)
@@ -417,7 +417,7 @@ def confirmation():
     
     return render_template("confirmation.html", user=current_user, products_in_cart=cart_items, total_cost=total_cost)
     
-#doing
+
 def mark_order_as_paid(user, total_cost):
     
     # Create a new order for the user
@@ -427,7 +427,6 @@ def mark_order_as_paid(user, total_cost):
     db.session.add(new_order)
     db.session.commit()
     
-    print(new_order.order_id)
     cart = Cart.get_active_cart(user.id)
     # Retrieve the products from the user's current cart
     cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
@@ -446,18 +445,21 @@ def mark_order_as_paid(user, total_cost):
 
 @views.route('/view_pdf')
 def view_pdf():
-    user = current_user
-    cart = Cart.get_active_cart(user.id)
+    user = UserAccounts.query.filter_by(email_address=current_user.email_address).first()
+    cart = Cart.get_active_cart(current_user.id)
 
     if cart:
-        cart_items = cart.cart_items
-        total_cost = sum(item.product.price * item.quantity for item in cart_items)
+        cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
+        
+        for cart_item in cart_items:
+            product = Product.query.get(cart_item.product_id)
+        total_cost = sum(product.price * cart_item.quantity for cart_item in cart_items)
     else:
         cart_items = []
         total_cost = 0.0
 
     pdf_data = generate_order_pdf(user, cart_items, total_cost)
-
+    
     response = make_response(pdf_data)
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = 'inline; filename=order_summary.pdf'
@@ -465,6 +467,7 @@ def view_pdf():
     return response
 
 def generate_order_pdf(user, cart_items, total_cost):
+    
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
 
@@ -493,7 +496,7 @@ def generate_order_pdf(user, cart_items, total_cost):
     # Table to display order details
     order_data = [["Product", "Quantity", "Price", "Subtotal"]]
     for cart_item in cart_items:
-        product = cart_item.product
+        product = product = Product.query.get(cart_item.product_id)
         order_data.append([product.name, cart_item.quantity, f"${product.price:.2f}", f"${cart_item.quantity * product.price:.2f}"])
     order_table = Table(order_data)
     order_table.setStyle(TableStyle([
