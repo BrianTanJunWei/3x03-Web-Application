@@ -132,10 +132,12 @@ def generate_pdf_content():
         p.drawString(100, y_position, f'Order ID: {order.order_id}')
         
         # Retrieve order items for the current order
-        order_items = OrderItem.query.filter_by(order=order).all()
+        
+        order_items = OrderItem.query.filter_by(order_id=order.order_id).all()
         for order_item in order_items:
+            product = Product.query.get(order_item.product_id)
             y_position -= 20
-            p.drawString(100, y_position, f'Product Name: {order_item.product.name}')
+            p.drawString(100, y_position, f'Product Name: {product.name}')
             y_position -= 20
             p.drawString(100, y_position, f'Quantity: {order_item.quantity}')
 
@@ -303,7 +305,7 @@ def writeBufferExcelFile():
 def edit_product(product_id):
     # Fetch the product to be edited
     account_status = (current_user.account_type)
-    if account_status == "staff":
+    if account_status in (0,1):
         product = Product.query.get(product_id)
 
         if request.method == 'POST':
