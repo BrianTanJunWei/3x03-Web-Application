@@ -594,51 +594,44 @@ def remove_from_cart(product_id):
 
 @views.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
-    # Find the token in the database
-    password_reset_token = PasswordResetToken.query.filter_by(token=token).first()
+    token_obj = PasswordResetToken.query.filter_by(token=token).first()
 
-    if not password_reset_token:
-        flash("Invalid or expired password reset token.", "danger")
-        return redirect(url_for('auth.login'))  # Redirect to the login page or another appropriate page
+    if token_obj and not token_obj.is_expired():
+        if request.method == 'POST':
+            # Retrieve the new password from the form
+            new_password = request.form.get('new_password')
 
-    # Check if the token has expired
-    token_age = datetime.now() - password_reset_token.timestamp
-    if token_age.total_seconds() > 300:  # Adjust the expiration time as needed
-        flash("Password reset token has expired. Please request a new one.", "danger")
-        return redirect(url_for('auth.login'))  # Redirect to the login page or another appropriate page
-
-    if request.method == 'POST':
-        new_password = request.form.get('new_password')
-        confirm_password = request.form.get('confirm_password')
-
-        if new_password != confirm_password:
-            flash("New password and confirmation do not match.", "danger")
-            return redirect(url_for('views.reset_password', token=token))
-
-        # Hash the new password and update the user's password
-        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
-        user = UserAccounts.query.get(password_reset_token.user_id)
-        user.password = hashed_password
-
-        # Remove the password reset token after a successful password reset
-        db.session.delete(password_reset_token)
-        db.session.commit()
-
-        flash("Password updated successfully.", "success")
+            # Update the user's password (assuming you have a user_id associated with the token)
+            user_id = token_obj.user_id
+            user = Login.query.filter_by(email_address=user_id).first()
+            
+            if user:
+                # Update the user's password in the database
+                user.password = bcrypt.generate_password_hash(new_password)  # You need to implement a password hashing function
+                db.session.commit()
+                
+                # Delete the used token
+                db.session.delete(token_obj)
+                db.session.commit()
+                
+                flash('Your password has been reset. You can now log in with your new password.', 'success')
+                return redirect(url_for('auth.login'))
+        
+        return render_template('reset_password.html')
+    else:
+        flash('This password reset link is invalid or has expired.', 'danger')
         return redirect(url_for('auth.login'))
-
-    return render_template("reset_password.html")
 
 @views.route('/request_password_reset', methods=['GET', 'POST'])
 def request_password_reset():
 
     if request.method == 'POST':
         email = request.form.get('email')
-        user = UserAccounts.query.filter_by(email=email).first()
+        user = UserAccounts.query.filter_by(email_address=email).first()
 
         if user:
             # Create a password reset token and save it in the database
-            token = PasswordResetToken(user_id=user.id)
+            token = PasswordResetToken(user_id=user.email_address)
             db.session.add(token)
             db.session.commit()
 
@@ -668,7 +661,7 @@ def send_password_reset_email(user, token):
         'Content-Type': 'application/json',
     }
     data = {
-        'to': [{'email': user.email}],
+        'to': [{'email': user.email_address}],
         'subject': 'Password Reset Request',
         'htmlContent': email_content,
         'sender': {'email': SENDER_EMAIL},
