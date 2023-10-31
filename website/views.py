@@ -49,8 +49,10 @@ def order():
         # Staff members view all orders
         orders = Order.query.all()
         for order in orders:
+            customer = Login.query.get(order.customer)
+            customer_first_name = UserAccounts.query.get(customer.email_address).first_name
             total_cost = calculate_total_cost(order)
-        return render_template("all_orders.html", user=current_user, orders=orders, account_status=account_status, total_cost=total_cost)
+        return render_template("all_orders.html", user=current_user, orders=orders, customer_first_name=customer_first_name, account_status=account_status, total_cost=total_cost)
     else:
         orders = Order.query.filter_by(customer=current_user.id).all()
         for order in orders:
@@ -84,17 +86,6 @@ def order_details(order_id):
         flash('Order not found', 'danger')
         return redirect(url_for('views.order_history'))
 
-# staff
-@views.route('/all_orders')
-@login_required  # Use @login_required to ensure only staff members can access this route
-def all_orders():
-    account_status = (current_user.account_type)
-    # Add code to fetch all orders from all customers
-    orders = Order.query.all()
-    for order in orders:
-            total_cost = calculate_total_cost(order)
-    return render_template('all_orders.html', orders=orders, account_status=account_status, total_cost=total_cost)
-
 @views.route('/update_order_status/<int:order_id>', methods=['POST'])
 @login_required
 def update_order_status(order_id):
@@ -115,7 +106,11 @@ def update_order_status(order_id):
 
     # Redirect back to the 'all_orders' page
     orders = Order.query.all()  # Fetch all orders again
-    return render_template('all_orders.html', orders=orders, user=current_user, account_status=account_status)
+    for order in orders:
+            customer = Login.query.get(order.customer)
+            customer_first_name = UserAccounts.query.get(customer.email_address).first_name
+            total_cost = calculate_total_cost(order)
+    return render_template('all_orders.html', orders=orders, user=current_user, customer_first_name=customer_first_name, account_status=account_status, total_cost=total_cost)
 
 @views.route('/generate_pdf', methods=['GET'])
 def generate_pdf_content():
