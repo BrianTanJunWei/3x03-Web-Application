@@ -25,12 +25,10 @@ def home():
     products = Product.query.all()
     account_status = (current_user.account_type)
     print (account_status)
-    if account_status == 0 or 1:
+    if account_status in (0,1):
         return render_template("staff_catalog.html", user=current_user, account_status=account_status, products=products)
     else:
         return render_template("customer_catalog.html", user=current_user, account_status=account_status, products=products)
-    
-
 
 @views.route('/product/<int:product_id>')
 def view_product(product_id):
@@ -235,9 +233,6 @@ def disable_staff(staff_id):
             db.session.commit()
             return render_template("admin_staff_details.html", user=current_user, staff=staff, staffinfo=staffinfo, valid=valid)
 
-
-           
-
 @views.route('/download_logs_api')
 @login_required
 def downloadLogs():
@@ -344,6 +339,7 @@ def account():
 
     return render_template("account.html", user=current_user, userinfo=user, account_status=account_status)
 
+# not done yet
 @views.route('/cart')
 @login_required
 def cart():

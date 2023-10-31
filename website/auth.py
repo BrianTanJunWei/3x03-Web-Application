@@ -24,9 +24,21 @@ def login():
                 if bcrypt.check_password_hash(user.password, password):
                     # Password is correct, log the user in
                     login_user(user, remember=True)
-                    flash('Logged in successfully!', category='success')
-                    # TODO: insert check for user account type here
-                    return redirect(url_for('views.home'))
+                    
+                    if user.account_type == 2:
+                        #customer account
+                        flash('Logged in as a customer', category='success')
+                        return redirect(url_for('views.home'))
+                    elif user.account_type == 1:
+                        #staff account
+                        flash('Logged in as a staff member', category='success')
+                        return redirect(url_for('views.home'))
+                    elif user.account_type == 0:
+                        #admin account
+                        flash('Logged in as an admin', category='success')
+                        return redirect(url_for('views.home'))
+                    else:
+                        flash('Unknown account type', category='error')
                 else:
                     flash('Incorrect email or password. Try again', category='error')
         else:
