@@ -72,6 +72,9 @@
           <a type="button" class="btn btn-primary" href="{{ url_for('views.view_product', product_id=product.id) }}">
             View
           </a>
+          <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#removeProductModal_{{ product.id }}">
+            Remove
+          </button>
           <!-- Edit Product Modal -->
           <div class="modal" id="editProductModal_{{ product.id }}" tabindex="-1" role="dialog" aria-labelledby="editProductModalLabel_{{ product.id }}" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -103,9 +106,30 @@
                     </div>
                     <div class="form-check">
                       <input type="checkbox" class="form-check-input" id="editIsHidden_{{ product.id }}" name="is_hidden" value="1" {% if product.is_hidden %}checked{% endif %}>
-                      <label class="form-check-label" for="editIsHidden_{{ product.id }}">Is Hidden</label>
+                      <label class="form-check-label" for="editIsHidden_{{ product.id }}">Hide product</label>
                     </div>
                     <button type="submit" class="btn btn-primary">Save Changes</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Remove Product Modal -->
+          <div class="modal" id="removeProductModal_{{ product.id }}" tabindex="-1" role="dialog" aria-labelledby="removeProductModalLabel_{{ product.id }}" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="removeProductModalLabel_{{ product.id }}">Remove Product</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <p>Are you sure you want to remove this product?</p>
+                  <!-- Form to remove the product -->
+                  <form id="removeProductForm_{{ product.id }}" method="POST" action="{{ url_for('views.remove_product', product_id=product.id) }}">
+                    <button type="submit" class="btn btn-danger">Remove</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                   </form>
                 </div>
               </div>

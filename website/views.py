@@ -42,13 +42,8 @@ def view_product(product_id):
     account_status = get_user_role(current_user.id)
     return render_template('product.html', user=current_user, product=product, account_status=account_status)
 
-@views.route('/inventory')
-@login_required # prevents ppl from going to homepage without logging in
-def inventory():
-    return render_template("inventory.html", user=current_user)
-
 @views.route('/order')
-@login_required # prevents ppl from going to homepage without logging in
+@login_required
 def order():
     account_status = get_user_role(current_user.id)
     if account_status == 'staff':
@@ -58,7 +53,7 @@ def order():
     else:
         orders = Order.query.filter_by(customer=current_user.id).all()
         print(orders)  # Add this line for debugging
-        return render_template("order.html", user=current_user, orders=orders)
+        return render_template("order.html", user=current_user, orders=orders,account_status=account_status)
 
 @views.route('/order_details/<int:order_id>')
 @login_required
@@ -66,7 +61,6 @@ def order_details(order_id):
     order = Order.query.get(order_id)
 
     if order:
-        # Use joinedload to fetch related order_items and product data in a single query
         order = (
             Order.query
             .filter_by(order_id=order_id)
@@ -81,34 +75,40 @@ def order_details(order_id):
 
 # staff
 @views.route('/all_orders')
-@login_required  # Use @login_required to ensure only staff members can access this route
+@login_required 
 def all_orders():
     account_status = get_user_role(current_user.id)
-    # Add code to fetch all orders from all customers
-    orders = Order.query.all()
-    return render_template('all_orders.html', orders=orders, account_status=account_status)
+    if account_status == "staff":
+        orders = Order.query.all()
+        return render_template('all_orders.html', orders=orders, account_status=account_status)
+    else:
+        flash("You do not have the permission to view order!", category="error")
+
 
 @views.route('/update_order_status/<int:order_id>', methods=['POST'])
 @login_required
 def update_order_status(order_id):
     account_status = get_user_role(current_user.id)
-    # Get the new status from the form
-    new_status = request.form.get('new_status')
+    if account_status == "staff":
+        # Get the new status from the form
+        new_status = request.form.get('new_status')
     
-    # Find the order by ID
-    order = Order.query.get(order_id)
+        # Find the order by ID
+        order = Order.query.get(order_id)
 
-    if order:
-        # Update the order status
-        order.order_status = new_status
-        db.session.commit()
-        flash(f'Order status updated to {new_status} for order ID {order_id}.', 'success')
+        if order:
+            # Update the order status
+            order.order_status = new_status
+            db.session.commit()
+            flash(f'Order status updated to {new_status} for order ID {order_id}.', 'success')
+        else:
+            flash(f'Order with ID {order_id} not found.', 'danger')
+
+        # Redirect back to the 'all_orders' page
+        orders = Order.query.all()  # Fetch all orders again
+        return render_template('all_orders.html', orders=orders, user=current_user, account_status=account_status)
     else:
-        flash(f'Order with ID {order_id} not found.', 'danger')
-
-    # Redirect back to the 'all_orders' page
-    orders = Order.query.all()  # Fetch all orders again
-    return render_template('all_orders.html', orders=orders, user=current_user, account_status=account_status)
+        flash("You do not have the permission to modify order!", category="error")
 
 @views.route('/generate_pdf', methods=['GET'])
 def generate_pdf_content():
@@ -145,25 +145,63 @@ def generate_pdf_content():
 
 @views.route('/add_product', methods=['POST'])
 def add_product():
-    # Get data from the request
-    name = request.form.get('name')
-    description = request.form.get('description')
-    price = request.form.get('price')
-    image_file = request.files['image']
-    is_hidden = bool(request.form.get('is_hidden'))
+    account_status = get_user_role(current_user.id)
+    if account_status == "staff":
+        # Get data from the request
+        name = request.form.get('name')
+        description = request.form.get('description')
+        price = request.form.get('price')
+        image_file = request.files['image']
+        is_hidden = bool(request.form.get('is_hidden'))
 
-    # Create a new product
-    new_product = Product(name=name, description=description, price=price, is_hidden=is_hidden)
+        # Create a new product
+        new_product = Product(name=name, description=description, price=price, is_hidden=is_hidden)
 
-    # Save the image
-    new_product.save_image(image_file)
+        # Save the image
+        new_product.save_image(image_file)
     
-    # Add the new product to the database
-    db.session.add(new_product)
-    db.session.commit()
+        # Add the new product to the database
+        db.session.add(new_product)
+        db.session.commit()
+        flash(f'{new_product.name} with the price of ${new_product.price} have been added to the catalog.', 'success')
 
-    # Redirect to the shop page or wherever you want
-    return redirect(url_for('views.home'))
+        # Redirect to the shop page or wherever you want
+        return redirect(url_for('views.home'))
+    else:
+        flash("You do not have the permission to add product!", category="error")
+
+@views.route('/remove_product/<int:product_id>', methods=['POST'])
+def remove_product(product_id):
+    # Check the user's account status
+    account_status = get_user_role(current_user.id)
+
+    if account_status == "staff":
+        # Retrieve the product to be removed from the database
+        product_to_remove = Product.query.get(product_id)
+
+        if product_to_remove:
+            product_name = product_to_remove.name
+            # Check for related cart items
+            cart_items = CartItem.query.filter_by(product_id=product_id).all()
+            if cart_items:
+                # Remove related cart items
+                for cart_item in cart_items:
+                    db.session.delete(cart_item)
+            
+            # Perform the removal
+            db.session.delete(product_to_remove)
+            db.session.commit()
+
+            flash(f'{product_name} have been removed from the catalog.', 'success')
+
+            # Redirect to the catalog or another appropriate page
+            return redirect(url_for('views.home'))
+        else:
+            flash("Product not found.", category="error")
+    else:
+        flash("You do not have the permission to remove products.", category="error")
+
+    return redirect(url_for('views.catalog'))
 
 @views.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
 def edit_product(product_id):
@@ -188,6 +226,8 @@ def edit_product(product_id):
             # Commit the changes to the database
             db.session.commit()
 
+            flash(f'{product.name} have been successfully modified.', 'success')
+            
             # Redirect to the product's details page or wherever you want
             return redirect(url_for('views.home', product_id=product.id))
     else:
@@ -219,17 +259,21 @@ def account():
 def cart():
     user = current_user
     account_status = get_user_role(current_user.id)
-    cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
+    cart = Cart.get_active_cart(user.id)
 
     if cart:
-        cart_items = cart.cart_items
+        all_cart_items = cart.cart_items
+
+        # Collect hidden items to be removed
+        hidden_items = [cart_item for cart_item in all_cart_items if cart_item.product.is_hidden]
 
         # Remove hidden items from the cart
-        for cart_item in cart_items:
-            product = cart_item.product
-            if product.is_hidden:
-                db.session.delete(cart_item)
-                db.session.commit()
+        for cart_item in hidden_items:
+            db.session.delete(cart_item)
+            db.session.commit()
+
+        # Filter hidden items out of the displayed cart_items
+        cart_items = [cart_item for cart_item in all_cart_items if not cart_item.product.is_hidden]
         
         total_cost = sum(item.product.price * item.quantity for item in cart_items)
     
