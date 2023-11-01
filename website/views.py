@@ -20,21 +20,27 @@ views = Blueprint('views', __name__)
 bcrypt = Bcrypt()
 
 @views.route('/')
-@login_required # prevents ppl from going to homepage without logging in
 def home():
     products = Product.query.all()
-    account_status = (current_user.account_type)
-    print (account_status)
-    if account_status == 1:
-        return render_template("staff_catalog.html", user=current_user, account_status=account_status, products=products)
-    else:
-        return render_template("customer_catalog.html", user=current_user, account_status=account_status, products=products)
 
+    if current_user.is_authenticated:
+        account_status = (current_user.account_type)
+        
+        if account_status == 1:
+            return render_template("staff_catalog.html", user=current_user, account_status=account_status, products=products)
+        elif account_status == 2:
+            return render_template("customer_catalog.html", user=current_user, account_status=account_status, products=products)
+    else:
+        return render_template("catalog.html", user=current_user, products=products)
+    
 @views.route('/product/<int:product_id>')
 def view_product(product_id):
     product = Product.query.get(product_id)
-    account_status = (current_user.account_type)
-    return render_template('product.html', user=current_user, product=product, account_status=account_status)
+    if current_user.is_authenticated:
+        account_status = current_user.account_type
+        return render_template('product.html', user=current_user, product=product, account_status=account_status)
+    else:
+        return render_template('product.html', user=None, product=product, account_status=None)
 
 @views.route('/order')
 @login_required # prevents ppl from going to homepage without logging in
@@ -339,29 +345,30 @@ def confirmation():
     
 
 def mark_order_as_paid(user, total_cost):
-    
-    # Create a new order for the user
-    new_order = Order(customer=user.id, order_status='Paid', placed_date=datetime.now())
+    account_status = (current_user.account_type)
+    if account_status == 2:
+        # Create a new order for the user
+        new_order = Order(customer=user.id, order_status='Paid', placed_date=datetime.now())
 
-    # Commit changes to the database
-    db.session.add(new_order)
-    db.session.commit()
-    
-    cart = Cart.get_active_cart(user.id)
-    # Retrieve the products from the user's current cart
-    cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
+        # Commit changes to the database
+        db.session.add(new_order)
+        db.session.commit()
+        
+        cart = Cart.get_active_cart(user.id)
+        # Retrieve the products from the user's current cart
+        cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
 
-    for cart_item in cart_items:
-        # Create an order item for each product in the cart
-        order_item = OrderItem(order_id=new_order.order_id, product_id=cart_item.product_id, quantity=cart_item.quantity)
-        db.session.add(order_item)
+        for cart_item in cart_items:
+            # Create an order item for each product in the cart
+            order_item = OrderItem(order_id=new_order.order_id, product_id=cart_item.product_id, quantity=cart_item.quantity)
+            db.session.add(order_item)
 
-    # Create a new cart for the user
-    new_cart = Cart(customer=user.id)
-    db.session.add(new_cart)
-    
-    # Commit changes to the database
-    db.session.commit()    
+        # Create a new cart for the user
+        new_cart = Cart(customer=user.id)
+        db.session.add(new_cart)
+        
+        # Commit changes to the database
+        db.session.commit()    
 
 @views.route('/view_pdf')
 def view_pdf():

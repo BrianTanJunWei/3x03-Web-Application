@@ -27,7 +27,6 @@ def login():
                     
                     if user.account_type == 2:
                         #customer account
-                        flash('Logged in as a customer', category='success')
                         return redirect(url_for('views.home'))
                     elif user.account_type == 1:
                         #staff account
@@ -50,7 +49,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('views.home'))
 
 @auth.route('/sign-up', methods=['GET', 'POST'])
 def sign_up():
