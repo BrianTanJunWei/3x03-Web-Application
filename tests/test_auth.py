@@ -1,12 +1,11 @@
 import unittest
 from website import create_app, db
-from website.models import User
+from website.models import Login, UserAccounts
 from flask_testing import TestCase
-import logging
 from website.auth import bcrypt
+from flask_login import login_user, current_user
 
 class TestAuth(TestCase):
-
     def create_app(self):
         app = create_app()
         app.config['TESTING'] = True
@@ -25,22 +24,23 @@ class TestAuth(TestCase):
     def _create_test_user(self):
         # Create a test user for login and signup tests
         hashed_password = bcrypt.generate_password_hash('password').decode('utf-8')
-        user = User(email='testuser@example.com', first_name='Test', password=hashed_password)
-        db.session.add(user)
+        user_login = Login(email_address='testuser@example.com', password=hashed_password, account_status=True, account_type=2)
+        user_accounts = UserAccounts(email_address='testuser@example.com', first_name='Test', last_name='User')
+        db.session.add(user_login)
+        db.session.add(user_accounts)
         db.session.commit()
-
 
     def test_login(self):
         response = self.client.post('/login', data=dict(
             email='testuser@example.com',
             password='password'
         ), follow_redirects=True)
-        logging.info("Password used: password")
-        logging.info(f"User password: {User.query.first().password}")
 
         self.assert200(response)  # Check if the response is successful
-        self.assertIn(b'Logged in successfully!', response.data)  # Check if the success flash message is in the response
-
+        self.assertTrue(current_user.is_authenticated)  # Check if the user is authenticated
+        # Check if the user is redirected to a specific page after login
+        self.assertEqual(response.request.path, '/')
+        
     def test_login_invalid_credentials(self):
         response = self.client.post('/login', data=dict(
             email='testuser@example.com',
@@ -49,17 +49,22 @@ class TestAuth(TestCase):
 
         self.assert200(response)
         self.assertIn(b'Incorrect email or password. Try again', response.data)
+        self.assertFalse(current_user.is_authenticated)  # Check if the user is not authenticated
 
     def test_signup(self):
         response = self.client.post('/sign-up', data=dict(
             email='newuser@example.com',
             firstName='New User',
+            lastName='Last Name',
+            address='123 Main St',
+            contact='1234567890',
             password1='new_password',
             password2='new_password'
         ), follow_redirects=True)
 
         self.assert200(response)
         self.assertIn(b'Sign up completed!', response.data)
+        self.assertTrue(current_user.is_authenticated)  # Check if the user is authenticated
 
 if __name__ == '__main__':
     unittest.main()
