@@ -5,7 +5,7 @@
 {% block content %}
   <h1>Your Cart</h1>
   
-  {% if products_in_cart %}
+  {% if cart_items_with_products %}
   <table class="table">
     <thead>
       <tr>
@@ -17,14 +17,14 @@
       </tr>
     </thead>
     <tbody>
-      {% for item in products_in_cart %}
+      {% for cart_item, product in cart_items_with_products %}
       <tr>
-        <td>{{ item.product.name }}</td>
-        <td>${{ "%.2f"|format(item.product.price) }}</td>
-        <td>{{ item.quantity }}</td>
-        <td>${{ "%.2f"|format(item.product.price * item.quantity) }}</td>
+        <td>{{ product.name }}</td>
+        <td>${{ "%.2f"|format(product.price) }}</td>
+        <td>{{ cart_item.quantity }}</td>
+        <td>${{ "%.2f"|format(product.price * cart_item.quantity) }}</td>
         <td>
-          <form method="POST" action="{{ url_for('views.remove_from_cart', product_id=item.product.id) }}">
+          <form method="POST" action="{{ url_for('views.remove_from_cart', product_id=product.id) }}">
             <button type="submit" class="btn btn-danger">Remove</button>
           </form>
         </td>

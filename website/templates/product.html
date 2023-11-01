@@ -12,12 +12,13 @@
         <h5 class="card-title">{{ product.name }}</h5>
         <p class="card-text">{{ product.description }}</p>
         <p class="card-text">${{ "%.2f"|format(product.price) }}</p>
-        <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
-        {% if account_status == None %}
+        
+        {% if account_status == 2 %}
         <form method="POST" action="{{ url_for('views.add_to_cart', product_id=product.id) }}">
           <button type="submit" class="btn btn-primary">Add to Cart</button>
         </form>
         {% endif %}
+        <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
   </div>
   
   {% endblock %}

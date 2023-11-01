@@ -34,7 +34,7 @@ def create_app():
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    from .models import User, Product
+    from .models import Login, UserAccounts, AdminAccounts, StaffAccounts, Product
 
     create_database(app)
 
@@ -45,14 +45,36 @@ def create_app():
     # tell flask how we load user
     @login_manager.user_loader
     def load_user(id):
-        return User.query.get(int(id)) # primary key
+        return Login.query.get(int(id)) # primary key
+    
+    def return_user_name(id):
+        user = Login.query.get(int(id))
+        if (user.account_type == 0):
+            name = AdminAccounts.query.filter_by(email_address=user.email_address).first()
+            return name.name
+        if (user.account_type == 1):
+            name = StaffAccounts.query.filter_by(email_address=user.email_address).first()
+            return name.name
+        if (user.account_type == 2):
 
+            name = UserAccounts.query.filter_by(email_address=user.email_address).first()
+            return name.first_name
+        
+    
+    def return_user_type(id):
+        user = Login.query.get(int(id))
+        return user.account_type
+
+    app.jinja_env.globals.update(return_user_name=return_user_name,
+                                 return_user_type=return_user_type)
     return app
 
 
 def create_database(app):
     with app.app_context():
         db_path = path.join('website', DB_NAME)
+        db.create_all()
         if not path.exists(db_path): 
             db.create_all()
             print('Created Database!')
+

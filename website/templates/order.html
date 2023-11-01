@@ -18,7 +18,7 @@
       <tr>
         <td>{{ order.placed_date }}</td>
         <td>{{ order.order_status }}</td>
-        <td>${{ "%.2f"|format(order.calculate_total_cost()) }}</td>
+        <td>${{ "%.2f"|format(total_cost) }}</td>
         <td><a href="{{ url_for('views.order_details', order_id=order.order_id) }}">View Details</a></td>
       </tr>
       {% endfor %}

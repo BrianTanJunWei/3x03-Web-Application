@@ -1,4 +1,4 @@
-{% extends "base.html" %} 
+{% extends 'customerBase.html' %} 
 {% block title %}Accounts Management{% endblock %} 
 
 {% block content %}
@@ -27,7 +27,7 @@
             <td>{{staff.name}}</td>
             <td>{{user.account_status}}</td>
             <td>
-                <a class="btn btn-primary" href= "#" > More info </button>
+                <a class="btn btn-primary" href= "/staffaccounts/{{staff.email_address}}" > More info </button>
             </td>
         </tr>
         {%endif%}
