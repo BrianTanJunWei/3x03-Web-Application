@@ -23,7 +23,7 @@ def create_app():
     app.config['SENDINBLUE_API_KEY'] = SENDINBLUE_API_KEY
     app.config['SENDER_EMAIL'] = SENDER_EMAIL
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:3x03_gpa5@h54.169.6.222:3306/{DB_NAME}'
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:3x03_gpa5@localhost/{DB_NAME}'
     app.config['UPLOAD_FOLDER'] = 'uploads'
 
     db.init_app(app)
