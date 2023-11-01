@@ -26,7 +26,7 @@ def home():
     if current_user.is_authenticated:
         account_status = (current_user.account_type)
         
-        if account_status == 1:
+        if account_status in (0,1):
             return render_template("staff_catalog.html", user=current_user, account_status=account_status, products=products)
         elif account_status == 2:
             return render_template("customer_catalog.html", user=current_user, account_status=account_status, products=products)
@@ -51,17 +51,22 @@ def order():
         customer_first_name = ""  # Define it here with an initial value
         total_cost = 0.0  # Define total_cost here with an initial value
         orders = Order.query.all()
+        
+        customer_first_names = []  # Create a list to store first names
+        total_costs = []  # Create a list to store total costs
+
         for order in orders:
             customer = Login.query.get(order.customer)
-            customer_first_name = UserAccounts.query.get(customer.email_address).first_name
-            total_cost = calculate_total_cost(order)
-        return render_template("all_orders.html", user=current_user, orders=orders, customer_first_name=customer_first_name, account_status=account_status, total_cost=total_cost)
+            customer_details = UserAccounts.query.get(customer.email_address)
+            customer_first_names.append(customer_details.first_name)
+            total_costs.append(calculate_total_cost(order))
+        return render_template("all_orders.html", user=current_user, orders=orders, customer_first_names=customer_first_names, account_status=account_status, total_costs=total_costs)
     else:
         orders = Order.query.filter_by(customer=current_user.id).all()
         total_cost = 0.0
         for order in orders:
             total_cost = calculate_total_cost(order)
-        return render_template("order.html", user=current_user, orders=orders,account_status=account_status, total_cost=total_cost)
+        return render_template("order.html", user=current_user, orders=orders, account_status=account_status, total_cost=total_cost)
 
 def calculate_total_cost(order):
     total_cost = 0.0
@@ -112,12 +117,16 @@ def update_order_status(order_id):
 
         # Redirect back to the 'all_orders' page
         orders = Order.query.all()  # Fetch all orders again
+        
+        customer_first_names = []  # Create a list to store first names
+        total_costs = []  # Create a list to store total costs
+
         for order in orders:
             customer = Login.query.get(order.customer)
-            customer_first_name = UserAccounts.query.get(customer.email_address).first_name
-            total_cost = calculate_total_cost(order)
-        return render_template('all_orders.html', orders=orders, user=current_user, customer_first_name=customer_first_name, account_status=account_status, total_cost=total_cost)
-
+            customer_details = UserAccounts.query.get(customer.email_address)
+            customer_first_names.append(customer_details.first_name)
+            total_costs.append(calculate_total_cost(order))
+        return render_template("all_orders.html", user=current_user, orders=orders, customer_first_names=customer_first_names, account_status=account_status, total_costs=total_costs)
 @views.route('/generate_pdf', methods=['GET'])
 def generate_pdf_content():
     filter_value = request.args.get('filter_value')
