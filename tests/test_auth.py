@@ -25,7 +25,7 @@ class TestAuth(TestCase):
         # Create a test user for login and signup tests
         hashed_password = bcrypt.generate_password_hash('password').decode('utf-8')
         user_login = Login(email_address='testuser1@example.com', password=hashed_password, account_status=True, account_type=2)
-        user_accounts = UserAccounts(email_address='testuser@example.com', first_name='Test', last_name='User')
+        user_accounts = UserAccounts(email_address='testuser1@example.com', first_name='Test', last_name='User')
         db.session.add(user_login)
         db.session.add(user_accounts)
         db.session.commit()
