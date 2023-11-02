@@ -15,6 +15,7 @@ class TestAuth(TestCase):
         app.config['TESTING'] = True
         app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:3x03_gpa5@172.18.0.5:3306/{DATABASE_TEST_NAME}'
         app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF protection for testing
+        db.init_app(app)
         return app
 
     def setUp(self):
