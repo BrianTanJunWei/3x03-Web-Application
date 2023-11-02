@@ -1,5 +1,5 @@
 import unittest
-from website import create_app, db
+from website import DATABASE_NAME, create_app, db
 from website.models import Login, UserAccounts
 from flask_testing import TestCase
 from website.auth import bcrypt
@@ -9,7 +9,7 @@ class TestAuth(TestCase):
     def create_app(self):
         app = create_app()
         app.config['TESTING'] = True
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'  # Use a separate test database
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:3x03_gpa5@172.18.0.5:3306/{DATABASE_NAME}'
         app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF protection for testing
         return app
 
