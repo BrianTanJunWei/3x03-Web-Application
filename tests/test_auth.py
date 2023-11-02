@@ -25,7 +25,7 @@ class TestAuth(TestCase):
     def tearDown(self):
          db.session.remove()
          user_to_delete = Login.query.filter_by(email_address='test1009@example.com').first()
-         if user_to_delete:
+        if user_to_delete:
             print(f"Deleting user: {user_to_delete.email_address}")
             db.session.delete(user_to_delete)
             print("User marked for deletion.")
@@ -82,7 +82,7 @@ class TestAuth(TestCase):
     def tearDown(self):
          db.session.remove()
          user_to_delete = Login.query.filter_by(email_address='test1009@example.com').first()
-         if user_to_delete:
+        if user_to_delete:
             print(f"Deleting user: {user_to_delete.email_address}")
             db.session.delete(user_to_delete)
             print("User marked for deletion.")
