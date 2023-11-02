@@ -1,8 +1,8 @@
-from . import db
+from flask import Blueprint, render_template, request, flash, redirect, url_for
 from .models import Login,UserAccounts,StaffAccounts
 from .models import *
-from flask import Blueprint, render_template, request, flash, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
+from . import db
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
@@ -10,10 +10,6 @@ from flask_sqlalchemy import SQLAlchemy
 auth = Blueprint('auth', __name__)
 bcrypt = Bcrypt()
 # Create an instance of the Flask app
-
-login_manager = LoginManager()
-login_manager.login_view = 'auth.login' # specify where to go when the user is not logged in
-login_manager.init_app(app)  # Initialize login manager within the create_app() function.
 
 @auth.route('/login', methods=['GET','POST'])
 def login():
