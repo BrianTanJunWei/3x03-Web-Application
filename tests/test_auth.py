@@ -33,7 +33,6 @@ class TestAuth(TestCase):
             print("User deleted successfully.")
         else:
             print("User not found in the database.")
-
     
     def _create_test_user(self):
         # Create a test user for login and signup tests
