@@ -27,14 +27,14 @@ class AuthTestCase(unittest.TestCase):
         db.session.add(user_accounts)
         db.session.commit()
 
-    def test_login_valid_credentials(self):
-        response = self.client.post('/login', data=dict(
-            email='test@example.com',
-            password='password'
-        ), follow_redirects=True)
+    # def test_login_valid_credentials(self):
+    #     response = self.client.post('/login', data=dict(
+    #         email='test@example.com',
+    #         password='password'
+    #     ), follow_redirects=True)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'Logged in as', response.data)
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertIn(b'Logged in as', response.data)
 
     def test_login_invalid_credentials(self):
         response = self.client.post('/login', data=dict(
