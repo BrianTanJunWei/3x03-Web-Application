@@ -11,6 +11,9 @@ auth = Blueprint('auth', __name__)
 bcrypt = Bcrypt()
 # Create an instance of the Flask app
 
+login_manager = LoginManager()
+login_manager.login_view = 'auth.login' # specify where to go when the user is not logged in
+login_manager.init_app(app)  # Initialize login manager within the create_app() function.
 
 @auth.route('/login', methods=['GET','POST'])
 def login():
