@@ -15,7 +15,8 @@ def login():
         password = request.form.get('password')
 
         # search db 
-        user = Login.query.filter_by(email_address=email).first()
+        #user = db.Login.query.filter_by(email_address=email).first()
+        db.session.query(Login).filter_by(email_address=email).first()
         if user:
             if user.account_status == False:
                 flash('Account locked out, please contact the administrator', category="error")
@@ -63,7 +64,8 @@ def sign_up():
         password1 = request.form.get('password1')
         password2 = request.form.get('password2')
         # check if user exist
-        user = Login.query.filter_by(email_address=email).first()
+       # user = Login.query.filter_by(email_address=email).first()
+        user = db.session.query(Login).filter_by(email_address=email).first()
 
         if user:
             flash('Email already exist', category='error')
@@ -107,8 +109,9 @@ def create_staff():
             password1 = request.form.get('password1')
             password2 = request.form.get('password2')
             # check if user exist
-            user = Login.query.filter_by(email_address=email).first()
-
+            #user = Login.query.filter_by(email_address=email).first()
+            user = db.session.query(Login).filter_by(email_address=email).first()
+            
             if user:
                 flash('Email already exist', category='error')
             elif len(email) < 4:
