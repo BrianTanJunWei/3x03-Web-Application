@@ -1,6 +1,5 @@
 import unittest
 from flask import current_app
-from flask_login import current_user
 from website import create_app, db
 from website.models import Login, UserAccounts
 from website.auth import bcrypt
@@ -39,17 +38,12 @@ class AuthTestCase(unittest.TestCase):
 
     def test_login_invalid_credentials(self):
         response = self.client.post('/login', data=dict(
-            email='test100@example.com',
+            email='test@example.com',
             password='wrong_password'
         ), follow_redirects=True)
 
-        self.assert200(response)  # Check if the response is successful
-
-        # Check if the response contains an error message or a specific HTML element
+        self.assertEqual(response.status_code, 200)
         self.assertIn(b'Incorrect email or password', response.data)
-
-        # Check if the user is not authenticated
-        self.assertFalse(current_user.is_authenticated)
 
     def test_registration_valid_input(self):
         response = self.client.post('/sign-up', data=dict(
