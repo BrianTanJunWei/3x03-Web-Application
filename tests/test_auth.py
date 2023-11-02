@@ -22,7 +22,7 @@ class TestAuth(TestCase):
         self.client = self.app.test_client()
         self._create_test_user()
 
-     def tearDown(self):
+    def tearDown(self):
         db.session.remove()
         user_to_delete = Login.query.filter_by(email_address='test100@example.com').first()
         if user_to_delete:
@@ -79,7 +79,7 @@ class TestAuth(TestCase):
         self.assertIn(b'Sign up completed!', response.data)
         self.assertTrue(current_user.is_authenticated)  # Check if the user is authenticated
 
-     def tearDown(self):
+    def tearDown(self):
         db.session.remove()
         user_to_delete = Login.query.filter_by(email_address='test100@example.com').first()
         if user_to_delete:
