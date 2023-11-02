@@ -22,6 +22,18 @@ class TestAuth(TestCase):
         self.client = self.app.test_client()
         self._create_test_user()
 
+    def tearDown(self):
+        db.session.remove()
+        user_to_delete = Login.query.filter_by(email_address='test100@example.com').first()
+    
+        if user_to_delete:
+            print(f"Deleting user: {user_to_delete.email_address}")
+            db.session.delete(user_to_delete)
+            db.session.commit()
+            print("User deleted successfully.")
+        else:
+            print("User not found in the database.")
+    
     def _create_test_user(self):
         # Create a test user for login and signup tests
         hashed_password = bcrypt.generate_password_hash('password').decode('utf-8')
