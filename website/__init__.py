@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 import os
 
 db = SQLAlchemy()
-DB_NAME = "3x03_Database"
 load_dotenv()  # Load environment variables from .env file
 
 SECRET_KEY = os.getenv('SECRET_KEY')
@@ -27,13 +26,14 @@ def create_app():
     app.config['DATABASE_NAME'] = DATABASE_NAME
     app.config['DATABASE_TEST_NAME'] = DATABASE_TEST_NAME
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:3x03_gpa5@172.18.0.5:3306/{DATABASE_NAME}'
     app.config['UPLOAD_FOLDER'] = 'uploads'
     
     if app.config['TESTING']:
-        # Use the testing database URI
+        # Use the testing database URI with localhost
         app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:3x03_gpa5@localhost:3306/{DATABASE_TEST_NAME}'
-        
+    else:
+        # Use the production database URI
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:3x03_gpa5@172.18.0.5:3306/{DATABASE_NAME}'
     
 
     db.init_app(app)
@@ -82,7 +82,7 @@ def create_app():
 
 def create_database(app):
     with app.app_context():
-        db_path = path.join('website', DB_NAME)
+        db_path = path.join('website', DATABASE_NAME)
         db.create_all()
         if not path.exists(db_path): 
             db.create_all()
