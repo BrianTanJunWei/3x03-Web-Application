@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
-from init import DATABASE_URI #b added
+from __init__ import DATABASE_URI #b added
 
 auth = Blueprint('auth', __name__)
 bcrypt = Bcrypt()
