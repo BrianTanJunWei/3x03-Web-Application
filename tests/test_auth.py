@@ -24,15 +24,15 @@ class TestAuth(TestCase):
     def _create_test_user(self):
         # Create a test user for login and signup tests
         hashed_password = bcrypt.generate_password_hash('password').decode('utf-8')
-        user_login = Login(email_address='testuser1@example.com', password=hashed_password, account_status=True, account_type=2)
-        user_accounts = UserAccounts(email_address='testuser1@example.com', first_name='Test', last_name='User')
+        user_login = Login(email_address='testuser2@example.com', password=hashed_password, account_status=True, account_type=2)
+        user_accounts = UserAccounts(email_address='testuser2@example.com', first_name='Test', last_name='User')
         db.session.add(user_login)
         db.session.add(user_accounts)
         db.session.commit()
 
     def test_login(self):
-        response = self.client.post('/login', data=dict(s
-            email='testuser1@example.com',
+        response = self.client.post('/login', data=dict(
+            email='testuser2@example.com',
             password='password'
         ), follow_redirects=True)
 
@@ -43,7 +43,7 @@ class TestAuth(TestCase):
         
     def test_login_invalid_credentials(self):
         response = self.client.post('/login', data=dict(
-            email='testuser1@example.com',
+            email='testuser2@example.com',
             password='wrong_password'
         ), follow_redirects=True)
 
@@ -53,7 +53,7 @@ class TestAuth(TestCase):
 
     def test_signup(self):
         response = self.client.post('/sign-up', data=dict(
-            email='newuser@example.com',
+            email='newuser2@example.com',
             firstName='New User',
             lastName='Last Name',
             address='123 Main St',
