@@ -17,7 +17,7 @@ def login():
         password = request.form.get('password')
 
         # search db 
-        user = db.Login.query.filter_by(email_address=email).first()
+        user = Login.query.filter_by(email_address=email).first()
         u
         if user:
             if user.account_status == False:
