@@ -17,9 +17,10 @@ class TestAuth(TestCase):
         db.create_all()
         self.client = self.app.test_client()
         self._create_test_user()
-
+    
     def tearDown(self):
-        db.drop_all()
+        db.session.remove()
+        #db.drop_all()
 
     def _create_test_user(self):
         # Create a test user for login and signup tests
