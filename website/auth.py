@@ -4,9 +4,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
+from init import DATABASE_URI #b added
 
 auth = Blueprint('auth', __name__)
 bcrypt = Bcrypt()
+# Connect to the database
+engine = create_engine(DATABASE_URI) #b added
+db.session.bind(engine) #b added 
+DATABASE_URI = 'mysql://root:3x03_gpa5@172.18.0.3:3306/{DATABASE_NAME}' #b added
 
 @auth.route('/login', methods=['GET','POST'])
 def login():
