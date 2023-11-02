@@ -66,14 +66,22 @@ class TestAuth(TestCase):
         self.assertIn(b'Sign up completed!', response.data)
         self.assertTrue(current_user.is_authenticated)  # Check if the user is authenticated
 
-    def tearDown(self):
-        db.session.remove()
-        user_to_delete = Login.query.filter_by(email_address='testing@example.com').first()
-        if user_to_delete:
-            print(f"Deleting user: {user_to_delete.email_address}")
-            db.session.delete(user_to_delete)
-            print("User marked for deletion.")
-            db.session.commit()
-            print("User deleted successfully.")
-        else:
-            print("User not found in the database.")
+def tearDown(self):
+    db.session.remove()
+    
+    # First, delete records from the child table (user_accounts)
+    user_accounts_to_delete = UserAccounts.query.filter_by(email_address='testing@example.com').all()
+    for user_account in user_accounts_to_delete:
+        db.session.delete(user_account)
+        db.session.commit()
+
+    # Then, delete the record from the parent table (login)
+    user_to_delete = Login.query.filter_by(email_address='testing@example.com').first()
+    if user_to_delete:
+        print(f"Deleting user: {user_to_delete.email_address}")
+        db.session.delete(user_to_delete)
+        print("User marked for deletion.")
+        db.session.commit()
+        print("User deleted successfully.")
+    else:
+        print("User not found in the database.")
