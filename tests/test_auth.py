@@ -32,7 +32,7 @@ class TestAuth(TestCase):
 
     def test_login(self):
         response = self.client.post('/login', data=dict(
-            email='testuser@example.com',
+            email='testuser1@example.com',
             password='password'
         ), follow_redirects=True)
 
