@@ -15,6 +15,7 @@ STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
 SENDINBLUE_API_KEY = os.getenv('SENDINBLUE_API_KEY')
 SENDER_EMAIL = os.getenv('SENDER_EMAIL')
 DATABASE_NAME = os.getenv('DATABASE_NAME')
+DATABASE_TEST_NAME = os.getenv('DATABASE_TEST_NAME')
 
 def create_app():
     app = Flask(__name__)
@@ -24,9 +25,16 @@ def create_app():
     app.config['SENDINBLUE_API_KEY'] = SENDINBLUE_API_KEY
     app.config['SENDER_EMAIL'] = SENDER_EMAIL
     app.config['DATABASE_NAME'] = DATABASE_NAME
+    app.config['DATABASE_TEST_NAME'] = DATABASE_TEST_NAME
 
     app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:3x03_gpa5@172.18.0.5:3306/{DATABASE_NAME}'
     app.config['UPLOAD_FOLDER'] = 'uploads'
+    
+    if app.config['TESTING']:
+        # Use the testing database URI
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:3x03_gpa5@localhost:3306/{DATABASE_TEST_NAME}'
+        
+    
 
     db.init_app(app)
    
