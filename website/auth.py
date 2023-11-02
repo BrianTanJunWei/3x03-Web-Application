@@ -27,7 +27,7 @@ def login():
                     
                     if user.account_type == 2:
                         #customer account
-                        flash('Logged in as a staff member', category='success')
+                        # flash('Logged in as a customer', category='success')
                         return redirect(url_for('views.home'))
                     elif user.account_type == 1:
                         #staff account
