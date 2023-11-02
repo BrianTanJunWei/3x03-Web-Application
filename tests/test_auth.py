@@ -1,13 +1,17 @@
+import os
 import unittest
-from website import DATABASE_TEST_NAME, create_app, db
+from website import create_app, db
 from website.models import Login, UserAccounts
 from flask_testing import TestCase
 from website.auth import bcrypt
 from flask_login import login_user, current_user
 
+DATABASE_TEST_NAME = os.getenv('DATABASE_TEST_NAME')
+
 class TestAuth(TestCase):
     def create_app(self):
         app = create_app()
+        app.config['DATABASE_TEST_NAME'] = DATABASE_TEST_NAME
         app.config['TESTING'] = True
         app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:3x03_gpa5@172.18.0.5:3306/{DATABASE_TEST_NAME}'
         app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF protection for testing
