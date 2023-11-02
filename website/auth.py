@@ -9,9 +9,13 @@ from init import DATABASE_URI #b added
 auth = Blueprint('auth', __name__)
 bcrypt = Bcrypt()
 # Connect to the database
-engine = create_engine(DATABASE_URI) #b added
-db.session.bind(engine) #b added 
 DATABASE_URI = 'mysql://root:3x03_gpa5@172.18.0.3:3306/{DATABASE_NAME}' #b added
+engine = create_engine(DATABASE_URI,dialect='mysql') #b added
+db.session.bind(engine) #b added 
+
+# Create the database tables if they don't exist
+db.create_all(bind=engine) #b added
+
 
 @auth.route('/login', methods=['GET','POST'])
 def login():
@@ -21,7 +25,7 @@ def login():
 
         # search db 
         #user = db.Login.query.filter_by(email_address=email).first()
-        db.session.query(Login).filter_by(email_address=email).first()
+        user = db.session.query(Login).filter_by(email_address=email).first()
         if user:
             if user.account_status == False:
                 flash('Account locked out, please contact the administrator', category="error")
