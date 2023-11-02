@@ -18,7 +18,7 @@ def login():
 
         # search db 
         user = Login.query.filter_by(email_address=email).first()
-        u
+        
         if user:
             if user.account_status == False:
                 flash('Account locked out, please contact the administrator', category="error")
