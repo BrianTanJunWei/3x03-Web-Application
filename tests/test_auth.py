@@ -33,7 +33,7 @@ class TestAuth(TestCase):
 
     def test_login(self):
         response = self.client.post('/login', data=dict(
-            email_address=self.user_email,
+            email_address='testing@example.com',
             password='password'
         ), follow_redirects=True)
 
@@ -44,7 +44,7 @@ class TestAuth(TestCase):
         
     def test_login_invalid_credentials(self):
         response = self.client.post('/login', data=dict(
-            email_address=self.user_email,
+            email_address='testing@example.com',
             password='wrong_password'
         ), follow_redirects=True)
 
