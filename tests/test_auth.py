@@ -24,15 +24,16 @@ class TestAuth(TestCase):
 
     def _create_test_user(self):
         hashed_password = bcrypt.generate_password_hash('password').decode('utf-8')
-        user_login = Login(email_address='testing@example.com', password=hashed_password, account_status=True, account_type=2)
-        user_accounts = UserAccounts(email_address='testing@example.com', first_name='Test', last_name='User')
+        self.user_email = f'testing{self._testMethodName}@example.com'
+        user_login = Login(email_address=self.user_email, password=hashed_password, account_status=True, account_type=2)
+        user_accounts = UserAccounts(email_address=self.user_email, first_name='Test', last_name='User')
         db.session.add(user_login)
         db.session.add(user_accounts)
         db.session.commit()
 
     def test_login(self):
         response = self.client.post('/login', data=dict(
-            email='testing@example.com',
+            email_address=self.user_email,
             password='password'
         ), follow_redirects=True)
 
@@ -42,8 +43,8 @@ class TestAuth(TestCase):
         self.assertEqual(response.request.path, '/')
         
     def test_login_invalid_credentials(self):
-        response = this.client.post('/login', data=dict(
-            email='testing@example.com',
+        response = self.client.post('/login', data=dict(
+            email_address=self.user_email,
             password='wrong_password'
         ), follow_redirects=True)
 
