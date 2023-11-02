@@ -1,4 +1,4 @@
-from .models import Login
+from .models import Login,UserAccounts,StaffAccounts
 from .models import *
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
