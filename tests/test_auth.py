@@ -72,8 +72,12 @@ class TestAuth(TestCase):
         user_to_delete = Login.query.filter_by(email_address='test100@example.com').first()
     
         if user_to_delete:
+            print(f"Deleting user: {user_to_delete.email_address}")
             db.session.delete(user_to_delete)
             db.session.commit()
+            print("User deleted successfully.")
+        else:
+            print("User not found in the database.")
         #db.drop_all()
         
 if __name__ == '__main__':
