@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
-from .models import *
 from .models import Login
+from .models import *
+from flask import Blueprint, render_template, request, flash, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
@@ -11,12 +11,6 @@ auth = Blueprint('auth', __name__)
 bcrypt = Bcrypt()
 # Create an instance of the Flask app
 
-db = SQLAlchemy()
-
-def create_app():
-    app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:3x03_gpa5@172.18.0.3:3306/{DATABASE_NAME}'
-    db.init_app(app)
 
 @auth.route('/login', methods=['GET','POST'])
 def login():
