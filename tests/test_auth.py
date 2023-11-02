@@ -9,6 +9,20 @@ from flask_login import login_user, current_user
 DATABASE_TEST_NAME = os.getenv('DATABASE_TEST_NAME')
 
 class TestAuth(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(TestAuth, cls).setUpClass()
+        cls._create_test_user()
+
+    @classmethod
+    def _create_test_user(cls):
+        hashed_password = bcrypt.generate_password_hash('password').decode('utf-8')
+        user_login = Login(email_address='testing@example.com', password=hashed_password, account_status=True, account_type=2)
+        user_accounts = UserAccounts(email_address='testing@example.com', first_name='Test', last_name='User')
+        db.session.add(user_login)
+        db.session.add(user_accounts)
+        db.session.commit()
+
     def create_app(self):
         app = create_app()
         app.config['DATABASE_TEST_NAME'] = DATABASE_TEST_NAME
@@ -16,36 +30,23 @@ class TestAuth(TestCase):
         app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:3x03_gpa5@172.18.0.3:3306/{DATABASE_TEST_NAME}'
         app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF protection for testing
         return app
-
-    def setUp(self):
-        db.create_all()
-        self.client = self.app.test_client()
-        self._create_test_user()
-
-    def tearDown(self):
-        db.session.remove()
-        user_to_delete = Login.query.filter_by(email_address='test100@example.com').first()
-        if user_to_delete:
-            print(f"Deleting user: {user_to_delete.email_address}")
-            db.session.delete(user_to_delete)
-            print("User marked for deletion.")
-            db.session.commit()
-            print("User deleted successfully.")
-        else:
-            print("User not found in the database.")
     
-    def _create_test_user(self):
-        # Create a test user for login and signup tests
-        hashed_password = bcrypt.generate_password_hash('password').decode('utf-8')
-        user_login = Login(email_address='test1009@example.com', password=hashed_password, account_status=True, account_type=2)
-        user_accounts = UserAccounts(email_address='test1009@example.com', first_name='Test', last_name='User')
-        db.session.add(user_login)
-        db.session.add(user_accounts)
-        db.session.commit()
+    # def tearDown(self):
+    #     db.session.remove()
+    #     user_to_delete = Login.query.filter_by(email_address='test100@example.com').first()
+    #     if user_to_delete:
+    #         print(f"Deleting user: {user_to_delete.email_address}")
+    #         db.session.delete(user_to_delete)
+    #         print("User marked for deletion.")
+    #         db.session.commit()
+    #         print("User deleted successfully.")
+    #     else:
+    #         print("User not found in the database.")
+    
 
     def test_login(self):
         response = self.client.post('/login', data=dict(
-            email='test1009@example.com',
+            email='testing@example.com',
             password='password'
         ), follow_redirects=True)
 
@@ -56,7 +57,7 @@ class TestAuth(TestCase):
         
     def test_login_invalid_credentials(self):
         response = self.client.post('/login', data=dict(
-            email='test1009@example.com',
+            email='testing@example.com',
             password='wrong_password'
         ), follow_redirects=True)
 
