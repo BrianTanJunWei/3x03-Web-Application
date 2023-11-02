@@ -69,6 +69,11 @@ class TestAuth(TestCase):
 
     def tearDown(self):
         db.session.remove()
+        user_to_delete = Login.query.filter_by(email_address='test100@example.com').first()
+    
+        if user_to_delete:
+            db.session.delete(user_to_delete)
+            db.session.commit()
         #db.drop_all()
         
 if __name__ == '__main__':
