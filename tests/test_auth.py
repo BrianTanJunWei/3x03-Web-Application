@@ -15,10 +15,19 @@ class AuthTestCase(unittest.TestCase):
         self._create_test_user()
 
     def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
+        # Delete test data while keeping the tables intact
+        test_user_login = Login.query.filter_by(email_address='test@example.com').first()
+        if test_user_login:
+            db.session.delete(test_user_login)
 
+        test_user_accounts = UserAccounts.query.filter_by(email_address='test@example.com').first()
+        if test_user_accounts:
+            db.session.delete(test_user_accounts)
+
+        db.session.commit()
+        db.session.remove()
+        self.app_context.pop()
+        
     def _create_test_user(self):
         hashed_password = bcrypt.generate_password_hash('password').decode('utf-8')
         user_login = Login(email_address='test@example.com', password=hashed_password, account_status=True, account_type=2)
