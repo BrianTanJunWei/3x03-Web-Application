@@ -7,7 +7,11 @@ from flask_bcrypt import Bcrypt
 
 auth = Blueprint('auth', __name__)
 bcrypt = Bcrypt()
+# Create an instance of the Flask app
+app = Flask(__name__) #b added
 
+# Initialize SQLAlchemy
+db.init_app(app) #b added
 
 
 @auth.route('/login', methods=['GET','POST'])
