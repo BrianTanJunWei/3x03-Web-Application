@@ -28,9 +28,12 @@ def create_app():
 
     app.config['UPLOAD_FOLDER'] = 'uploads'
     
- 
-    # Use the production database URI (MySQL)
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:3x03_gpa5@172.18.0.3:3306/{DATABASE_NAME}'
+    if app.config['TESTING']:
+        #Use the testing database URI with localhost
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:3x03_gpa5@172.18.0.3:3306/{DATABASE_TEST_NAME}'
+    else:
+        # Use the production database URI (MySQL)
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:3x03_gpa5@172.18.0.3:3306/{DATABASE_NAME}'
 
     db.init_app(app)
    
@@ -40,7 +43,7 @@ def create_app():
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    from .models import login, user_accounts, admin_accounts, staff_accounts
+    from .models import Login, UserAccounts, AdminAccounts, StaffAccounts, Product
 
     create_database(app)
 
@@ -51,24 +54,24 @@ def create_app():
     # tell flask how we load user
     @login_manager.user_loader
     def load_user(id):
-        return login.query.get(int(id)) # primary key
+        return Login.query.get(int(id)) # primary key
     
     def return_user_name(id):
-        user = login.query.get(int(id))
+        user = Login.query.get(int(id))
         if (user.account_type == 0):
-            name = admin_accounts.query.filter_by(email_address=user.email_address).first()
+            name = AdminAccounts.query.filter_by(email_address=user.email_address).first()
             return name.name
         if (user.account_type == 1):
-            name = staff_accounts.query.filter_by(email_address=user.email_address).first()
+            name = StaffAccounts.query.filter_by(email_address=user.email_address).first()
             return name.name
         if (user.account_type == 2):
 
-            name = user_accounts.query.filter_by(email_address=user.email_address).first()
+            name = UserAccounts.query.filter_by(email_address=user.email_address).first()
             return name.first_name
         
     
     def return_user_type(id):
-        user = login.query.get(int(id))
+        user = Login.query.get(int(id))
         return user.account_type
 
     app.jinja_env.globals.update(return_user_name=return_user_name,
@@ -83,4 +86,3 @@ def create_database(app):
         if not path.exists(db_path): 
             db.create_all()
             print('Created Database!')
-
