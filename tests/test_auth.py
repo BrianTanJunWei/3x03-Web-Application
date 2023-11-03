@@ -16,11 +16,11 @@ class AuthTestCase(unittest.TestCase):
 
     def tearDown(self):
         # Delete test data while keeping the tables intact
-        test_user_login = login.query.filter_by(email_address='test@example.com').first()
+        test_user_login = Login.query.filter_by(email_address='test@example.com').first()
         if test_user_login:
             db.session.delete(test_user_login)
 
-        test_user_accounts = user_accounts.query.filter_by(email_address='test@example.com').first()
+        test_user_accounts = UserAccounts.query.filter_by(email_address='test@example.com').first()
         if test_user_accounts:
             db.session.delete(test_user_accounts)
 
@@ -30,10 +30,10 @@ class AuthTestCase(unittest.TestCase):
         
     def _create_test_user(self):
         hashed_password = bcrypt.generate_password_hash('password').decode('utf-8')
-        user_login = login(email_address='test@example.com', password=hashed_password, account_status=True, account_type=2)
-        user_account = user_accounts(email_address='test@example.com', first_name='Test', last_name='User')
+        user_login = Login(email_address='test@example.com', password=hashed_password, account_status=True, account_type=2)
+        user_accounts = UserAccounts(email_address='test@example.com', first_name='Test', last_name='User')
         db.session.add(user_login)
-        db.session.add(user_account)
+        db.session.add(user_accounts)
         db.session.commit()
 
     def test_login_valid_credentials(self):
