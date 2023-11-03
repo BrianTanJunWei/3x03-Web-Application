@@ -4,7 +4,6 @@ from flask import Blueprint, flash, make_response, make_response, render_templat
 from flask_login import login_required, current_user
 from sqlalchemy import func
 from .models import *
-from .models import Product
 from . import SENDER_EMAIL, SENDINBLUE_API_KEY, db
 from io import BytesIO
 import xlsxwriter
