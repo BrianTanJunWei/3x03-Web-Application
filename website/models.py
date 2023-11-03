@@ -13,7 +13,7 @@ import string
 import pytz
 
 
-class login(db.Model, UserMixin):
+class Login(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email_address = db.Column(db.String(150), unique=True)
     password = db.Column(db.String(150))
@@ -21,7 +21,7 @@ class login(db.Model, UserMixin):
     account_type = db.Column(db.Integer)
     failedLoginCounter = db.Column(db.Integer, default=0)
 
-class user_accounts(db.Model):
+class UserAccounts(db.Model):
     email_address = db.Column(db.String(150), primary_key=True)
     address = db.Column(db.String(150))
     first_name = db.Column(db.String(150))
@@ -29,15 +29,15 @@ class user_accounts(db.Model):
     contact_no = db.Column(db.Integer)
     
 
-class staff_accounts(db.Model):
+class StaffAccounts(db.Model):
     email_address = db.Column(db.String(150),primary_key=True)
     name = db.Column(db.String(150))
 
-class admin_accounts(db.Model):
+class AdminAccounts(db.Model):
     email_address = db.Column(db.String(150),primary_key=True)
     name = db.Column(db.String(150))
 
-class logs(db.Model):
+class Logs(db.Model):
     log_id = db.Column(db.Integer, primary_key=True)
     log_level = db.Column(db.String(150))
     log_type = db.Column(db.String(150))
@@ -48,7 +48,7 @@ class logs(db.Model):
     account_id = db.Column(db.String(150))
     affected_id = db.Column(db.String(150))
 
-class product(db.Model):
+class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
@@ -70,7 +70,7 @@ class product(db.Model):
             image_data = output.getvalue()
             self.image = base64.b64encode(image_data).decode('utf-8')
             
-class cart(db.Model):
+class Cart(db.Model):
     cart_id = db.Column(db.Integer, primary_key=True)
     customer = db.Column(db.Integer, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
@@ -81,7 +81,7 @@ class cart(db.Model):
         return cls.query.filter_by(customer=user_id, is_active=True).first()
     
 # CartItems Table
-class cartitems(db.Model):
+class CartItem(db.Model):
     cart_item_id = db.Column(db.Integer, primary_key=True)
     cart_id = db.Column(db.Integer)
     product_id = db.Column(db.Integer, nullable=False)
@@ -89,7 +89,7 @@ class cartitems(db.Model):
     
     
 # Order Table
-class orders(db.Model):
+class Order(db.Model):
     order_id = db.Column(db.Integer, primary_key=True)
     customer = db.Column(db.Integer, nullable=False)
     order_status = db.Column(db.String(20))
@@ -98,14 +98,14 @@ class orders(db.Model):
     delivered_date = db.Column(db.DateTime)
 
 # OrderItems Table
-class orderitems(db.Model):
+class OrderItem(db.Model):
     order_item_id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, nullable=False)
     product_id = db.Column(db.Integer, nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
 
 
-class password_reset_token(db.Model):
+class PasswordResetToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=False)
     token = db.Column(db.String(100), nullable=False, unique=True)
@@ -123,5 +123,5 @@ def generate_unique_token(token_length=50):
     characters = string.ascii_letters + string.digits
     while True:
         token = ''.join(secrets.choice(characters) for _ in range(token_length))
-        if not password_reset_token.query.filter_by(token=token).first():
+        if not PasswordResetToken.query.filter_by(token=token).first():
             return token
