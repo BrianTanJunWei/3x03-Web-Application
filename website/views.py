@@ -21,7 +21,7 @@ bcrypt = Bcrypt()
 
 @views.route('/')
 def home():
-    products = product.query.all()
+    product = product.query.all()
 
     if current_user.is_authenticated:
         account_status = (current_user.account_type)
