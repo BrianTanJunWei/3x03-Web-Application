@@ -20,15 +20,18 @@ views = Blueprint('views', __name__)
 bcrypt = Bcrypt()
 
 @views.route('/')
-@login_required # prevents ppl from going to homepage without logging in
 def home():
     products = Product.query.all()
-    account_status = (current_user.account_type)
-    print (account_status)
-    if account_status in (0,1):
-        return render_template("staff_catalog.html", user=current_user, account_status=account_status, products=products)
+
+    if current_user.is_authenticated:
+        account_status = (current_user.account_type)
+        
+        if account_status in (0,1):
+            return render_template("staff_catalog.html", user=current_user, account_status=account_status, products=products)
+        elif account_status == 2:
+            return render_template("customer_catalog.html", user=current_user, account_status=account_status, products=products)
     else:
-        return render_template("customer_catalog.html", user=current_user, account_status=account_status, products=products)
+        return render_template("catalog.html", user=current_user, products=products)
 
 @views.route('/product/<int:product_id>')
 def view_product(product_id):
