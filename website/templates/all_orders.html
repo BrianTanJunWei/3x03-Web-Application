@@ -3,11 +3,13 @@
 {% block title %}All Orders{% endblock %}
 
 {% block content %}
+{% if account_status == 1 %}
   <h1>All Orders</h1>
   <div class="form-group">
     <label for="filter_status">Filter by Status:</label>
     <select class="form-control" id="filter_status">
         <option value="">All</option>
+        <option value="Paid">Paid</option>
         <option value="Processing">Processing</option>
         <option value="Shipped">Shipped</option>
         <option value="Delivered">Delivered</option>
@@ -29,9 +31,9 @@
         {% for order in orders %}
         <tr>
           <td>{{ order.order_id }}</td>
-          <td>{{ customer_first_name }}</td>
+          <td>{{ customer_first_names[loop.index0] }}</td>
           <td>{{ order.placed_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-          <td>${{ "%.2f"|format(total_cost) }}</td>
+          <td>${{ "%.2f"|format(total_costs[loop.index0]) }}</td>
           <td>{{ order.order_status }}</td>
           <td>
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#orderModal{{ order.order_id }}">
@@ -98,6 +100,7 @@
         window.location = `/generate_pdf?filter_value=${filterValue}`;
     });
   </script>
-  
+
+{% endif %}  
 {% endblock %}
 
