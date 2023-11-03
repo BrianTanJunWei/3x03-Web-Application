@@ -43,7 +43,7 @@ def create_app():
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    from .models import Login, UserAccounts, AdminAccounts, StaffAccounts, Product
+    from .models import login, user_accounts, admin_accounts, staff_accounts, product
 
     create_database(app)
 
