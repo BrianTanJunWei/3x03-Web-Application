@@ -21,7 +21,7 @@ bcrypt = Bcrypt()
 
 @views.route('/')
 def home():
-    product = product.query.all()
+    products = Product.query.all()
 
     if current_user.is_authenticated:
         account_status = (current_user.account_type)
@@ -35,7 +35,7 @@ def home():
     
 @views.route('/product/<int:product_id>')
 def view_product(product_id):
-    product = product.query.get(product_id)
+    product = Product.query.get(product_id)
     if current_user.is_authenticated:
         account_status = current_user.account_type
         return render_template('product.html', user=current_user, product=product, account_status=account_status)
@@ -50,19 +50,19 @@ def order():
         # Staff members view all orders
         customer_first_name = ""  # Define it here with an initial value
         total_cost = 0.0  # Define total_cost here with an initial value
-        orders = orders.query.all()
+        orders = Order.query.all()
         
         customer_first_names = []  # Create a list to store first names
         total_costs = []  # Create a list to store total costs
 
         for order in orders:
-            customer = login.query.get(order.customer)
-            customer_details = user_accounts.query.get(customer.email_address)
+            customer = Login.query.get(order.customer)
+            customer_details = UserAccounts.query.get(customer.email_address)
             customer_first_names.append(customer_details.first_name)
             total_costs.append(calculate_total_cost(order))
         return render_template("all_orders.html", user=current_user, orders=orders, customer_first_names=customer_first_names, account_status=account_status, total_costs=total_costs)
     else:
-        orders = orders.query.filter_by(customer=current_user.id).all()
+        orders = Order.query.filter_by(customer=current_user.id).all()
         total_cost = 0.0
         for order in orders:
             total_cost = calculate_total_cost(order)
@@ -70,9 +70,9 @@ def order():
 
 def calculate_total_cost(order):
     total_cost = 0.0
-    order_items = orderitems.query.filter_by(order_id=order.order_id).all()
+    order_items = OrderItem.query.filter_by(order_id=order.order_id).all()
     for order_item in order_items:
-        product = product.query.get(order_item.product_id)
+        product = Product.query.get(order_item.product_id)
         total_cost += product.price * order_item.quantity
     return total_cost
 
@@ -80,14 +80,14 @@ def calculate_total_cost(order):
 @login_required
 def order_details(order_id):
     account_status = (current_user.account_type)
-    order = orders.query.get(order_id)
+    order = Order.query.get(order_id)
 
     if order:
-        order_items = orderitems.query.filter_by(order_id=order_id).all()
+        order_items = OrderItem.query.filter_by(order_id=order_id).all()
         
         order_items_with_products = []
         for order_item in order_items:
-            product = product.query.get(order_item.product_id)
+            product = Product.query.get(order_item.product_id)
             order_items_with_products.append((order_item, product))
 
         total_cost = calculate_total_cost(order)
@@ -105,7 +105,7 @@ def update_order_status(order_id):
         new_status = request.form.get('new_status')
     
         # Find the order by ID
-        order = orders.query.get(order_id)
+        order = Order.query.get(order_id)
 
         if order:
             # Update the order status
@@ -116,14 +116,14 @@ def update_order_status(order_id):
             flash(f'Order with ID {order_id} not found.', 'danger')
 
         # Redirect back to the 'all_orders' page
-        orders = orders.query.all()  # Fetch all orders again
+        orders = Order.query.all()  # Fetch all orders again
         
         customer_first_names = []  # Create a list to store first names
         total_costs = []  # Create a list to store total costs
 
         for order in orders:
-            customer = login.query.get(order.customer)
-            customer_details = user_accounts.query.get(customer.email_address)
+            customer = Login.query.get(order.customer)
+            customer_details = UserAccounts.query.get(customer.email_address)
             customer_first_names.append(customer_details.first_name)
             total_costs.append(calculate_total_cost(order))
         return render_template("all_orders.html", user=current_user, orders=orders, customer_first_names=customer_first_names, account_status=account_status, total_costs=total_costs)
@@ -135,10 +135,10 @@ def generate_pdf_content():
 
     # Retrieve order
     if filter_value == "All" or filter_value == "":
-        orders = orders.query.all()
+        orders = Order.query.all()
         filter_value = "All"
     else:
-        orders = orders.query.filter_by(order_status=filter_value).all()
+        orders = Order.query.filter_by(order_status=filter_value).all()
     
     p.drawString(100, 750, f'Filtered Orders for Status: {filter_value}')
     y_position = 700  # Initial y-position
@@ -148,9 +148,9 @@ def generate_pdf_content():
         
         # Retrieve order items for the current order
         
-        order_items = orderitems.query.filter_by(order_id=order.order_id).all()
+        order_items = OrderItem.query.filter_by(order_id=order.order_id).all()
         for order_item in order_items:
-            product = product.query.get(order_item.product_id)
+            product = Product.query.get(order_item.product_id)
             y_position -= 20
             p.drawString(100, y_position, f'Product Name: {product.name}')
             y_position -= 20
@@ -174,7 +174,7 @@ def add_product():
         is_hidden = bool(request.form.get('is_hidden'))
 
         # Create a new product
-        new_product = product(name=name, description=description, price=price, is_hidden=is_hidden)
+        new_product = Product(name=name, description=description, price=price, is_hidden=is_hidden)
 
         # Save the image
         new_product.save_image(image_file)
@@ -196,12 +196,12 @@ def remove_product(product_id):
 
     if account_status == 1:
         # Retrieve the product to be removed from the database
-        product_to_remove = product.query.get(product_id)
+        product_to_remove = Product.query.get(product_id)
 
         if product_to_remove:
             product_name = product_to_remove.name
             # Check for related cart items
-            cart_items = cartitems.query.filter_by(product_id=product_id).all()
+            cart_items = CartItem.query.filter_by(product_id=product_id).all()
             if cart_items:
                 # Remove related cart items
                 for cart_item in cart_items:
@@ -227,7 +227,7 @@ def edit_product(product_id):
     # Fetch the product to be edited
     account_status = (current_user.account_type)
     if account_status == 1:
-        product = product.query.get(product_id)
+        product = Product.query.get(product_id)
 
         if request.method == 'POST':
             # Get the updated data from the form
@@ -255,7 +255,7 @@ def edit_product(product_id):
 @views.route('/account', methods=['GET', 'POST'])
 @login_required # prevents ppl from going to homepage without logging in
 def account():
-    user = user_accounts.query.filter_by(email_address=current_user.email_address).first()
+    user = UserAccounts.query.filter_by(email_address=current_user.email_address).first()
     account_status = (current_user.account_type)
     # Handle form submission if you want to allow users to update their information
     if request.method == 'POST':
@@ -279,16 +279,16 @@ def cart():
     account_status = (current_user.account_type)
     
     # Use the get_active_cart method from your models
-    cart = cart.get_active_cart(user.id)  
+    cart = Cart.get_active_cart(user.id)  
 
     if cart:
-        # Query the cartitems model to get cart items associated with the cart
-        cart_items = cartitems.query.filter_by(cart_id=cart.cart_id).all()
+        # Query the CartItem model to get cart items associated with the cart
+        cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
 
         cart_items_with_products = []
 
         for cart_item in cart_items:
-            product = product.query.get(cart_item.product_id)
+            product = Product.query.get(cart_item.product_id)
             if product and not product.is_hidden:
                 cart_items_with_products.append((cart_item, product))
             else:
@@ -305,7 +305,7 @@ def cart():
 
 # Define a method to create a new cart
 def create_new_cart(user):
-    new_cart = cart(user=user)
+    new_cart = Cart(user=user)
     db.session.add(new_cart)
     db.session.commit()
     return new_cart
@@ -315,14 +315,14 @@ def create_new_cart(user):
 @login_required
 def checkout():
     user = current_user
-    cart = cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
+    cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
 
-    cart_items = cartitems.query.filter_by(cart_id=cart.cart_id).all()
+    cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
     
     cart_items_with_products = []
     
     for cart_item in cart_items:
-        product = product.query.get(cart_item.product_id)
+        product = Product.query.get(cart_item.product_id)
         if product and not product.is_hidden:
             cart_items_with_products.append((cart_item, product))
                 
@@ -339,9 +339,9 @@ def checkout():
 @views.route('/confirmation')
 def confirmation():
     user = current_user
-    cart = cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
+    cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
 
-    cart_items = cartitems.query.filter_by(cart_id=cart.cart_id).all()
+    cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
     total_cost = sum(item.product.price * item.quantity for item in cart_items)
 
     pdf_data = generate_order_pdf(current_user, cart_items, total_cost)
@@ -357,23 +357,23 @@ def mark_order_as_paid(user, total_cost):
     account_status = (current_user.account_type)
     if account_status == 2:
         # Create a new order for the user
-        new_order = orders(customer=user.id, order_status='Paid', placed_date=datetime.now())
+        new_order = Order(customer=user.id, order_status='Paid', placed_date=datetime.now())
 
         # Commit changes to the database
         db.session.add(new_order)
         db.session.commit()
         
-        cart = cart.get_active_cart(user.id)
+        cart = Cart.get_active_cart(user.id)
         # Retrieve the products from the user's current cart
-        cart_items = cartitems.query.filter_by(cart_id=cart.cart_id).all()
+        cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
 
         for cart_item in cart_items:
             # Create an order item for each product in the cart
-            order_item = orderitems(order_id=new_order.order_id, product_id=cart_item.product_id, quantity=cart_item.quantity)
+            order_item = OrderItem(order_id=new_order.order_id, product_id=cart_item.product_id, quantity=cart_item.quantity)
             db.session.add(order_item)
 
         # Create a new cart for the user
-        new_cart = cart(customer=user.id)
+        new_cart = Cart(customer=user.id)
         db.session.add(new_cart)
         
         # Commit changes to the database
@@ -381,14 +381,14 @@ def mark_order_as_paid(user, total_cost):
 
 @views.route('/view_pdf')
 def view_pdf():
-    user = user_accounts.query.filter_by(email_address=current_user.email_address).first()
-    cart = cart.get_active_cart(current_user.id)
+    user = UserAccounts.query.filter_by(email_address=current_user.email_address).first()
+    cart = Cart.get_active_cart(current_user.id)
 
     if cart:
-        cart_items = cartitems.query.filter_by(cart_id=cart.cart_id).all()
+        cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
         
         for cart_item in cart_items:
-            product = product.query.get(cart_item.product_id)
+            product = Product.query.get(cart_item.product_id)
         total_cost = sum(product.price * cart_item.quantity for cart_item in cart_items)
     else:
         cart_items = []
@@ -432,7 +432,7 @@ def generate_order_pdf(user, cart_items, total_cost):
     # Table to display order details
     order_data = [["Product", "Quantity", "Price", "Subtotal"]]
     for cart_item in cart_items:
-        product = product = product.query.get(cart_item.product_id)
+        product = product = Product.query.get(cart_item.product_id)
         order_data.append([product.name, cart_item.quantity, f"${product.price:.2f}", f"${cart_item.quantity * product.price:.2f}"])
     order_table = Table(order_data)
     order_table.setStyle(TableStyle([
@@ -463,11 +463,11 @@ def generate_order_pdf(user, cart_items, total_cost):
 def clear_cart():
     user = current_user
     # Get the user's active cart
-    cart = cart.get_active_cart(user.id)
+    cart = Cart.get_active_cart(user.id)
 
     if cart:
         # Delete all cart items associated with the cart
-        cartitems.query.filter_by(cart_id=cart.cart_id).delete()
+        CartItem.query.filter_by(cart_id=cart.cart_id).delete()
         # Commit the changes to remove cart items
         db.session.commit()
 
@@ -479,17 +479,17 @@ def clear_cart():
 @login_required
 def add_to_cart(product_id):
     user = current_user
-    product = product.query.get(product_id)
+    product = Product.query.get(product_id)
     
     # Check if the user has an active cart, and create one if it doesn't exist
-    cart = cart.get_active_cart(user.id)
+    cart = Cart.get_active_cart(user.id)
     if cart is None:
-        cart = cart(customer=user.id)
+        cart = Cart(customer=user.id)
         db.session.add(cart)
         db.session.commit()
         
     # Add the product to the user's cart
-    cart_item = cartitems(cart_id=cart.cart_id, product_id=product.id, quantity=1)
+    cart_item = CartItem(cart_id=cart.cart_id, product_id=product.id, quantity=1)
     
     db.session.add(cart_item)
     db.session.commit()
@@ -502,11 +502,11 @@ def add_to_cart(product_id):
 @login_required
 def remove_from_cart(product_id):
     user = current_user
-    cart = cart.get_active_cart(user.id)  # Get the user's active cart
+    cart = Cart.get_active_cart(user.id)  # Get the user's active cart
 
     if cart:
-        product = product.query.get(product_id)
-        cart_item = cartitems.query.filter_by(cart_id=cart.cart_id, product_id=product_id).first()
+        product = Product.query.get(product_id)
+        cart_item = CartItem.query.filter_by(cart_id=cart.cart_id, product_id=product_id).first()
 
         if cart_item:
             # Remove the cart item and commit the changes
@@ -517,7 +517,7 @@ def remove_from_cart(product_id):
 
 @views.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
-    token_obj = password_reset_token.query.filter_by(token=token).first()
+    token_obj = PasswordResetToken.query.filter_by(token=token).first()
 
     if token_obj and not token_obj.is_expired():
         if request.method == 'POST':
@@ -526,7 +526,7 @@ def reset_password(token):
 
             # Update the user's password (assuming you have a user_id associated with the token)
             user_id = token_obj.user_id
-            user = login.query.filter_by(email_address=user_id).first()
+            user = Login.query.filter_by(email_address=user_id).first()
             
             if user:
                 # Update the user's password in the database
@@ -550,11 +550,11 @@ def request_password_reset():
 
     if request.method == 'POST':
         email = request.form.get('email')
-        user = user_accounts.query.filter_by(email_address=email).first()
+        user = UserAccounts.query.filter_by(email_address=email).first()
 
         if user:
             # Create a password reset token and save it in the database
-            token = password_reset_token(user_id=user.email_address)
+            token = PasswordResetToken(user_id=user.email_address)
             db.session.add(token)
             db.session.commit()
 
@@ -612,7 +612,7 @@ def logs():
     if(user_type != 0):
         return redirect(url_for('views.home'))
     else:
-        logs = logs.query.all()
+        logs = Logs.query.all()
         return render_template("admin_logs.html", user=current_user, logs=logs, account_status=account_status)
     
 @views.route('/logs/<logs_id>')
@@ -625,7 +625,7 @@ def view_log(logs_id):
     if(user_type != 0):
         return redirect(url_for('views.home'))
     else:
-        logs = logs.query.get(logs_id)
+        logs = Logs.query.get(logs_id)
         if (logs is None):
             valid = 0
         return render_template("admin_log_details.html", user=current_user, logs=logs, valid=valid, account_status=account_status)
@@ -640,8 +640,8 @@ def staffaccounts():
     if(user_type != 0):
         return redirect(url_for('views.home'))
     else:
-        staff = staff_accounts.query.all()
-        users = login.query.all()
+        staff = StaffAccounts.query.all()
+        users = Login.query.all()
         if (staff is None or users is None):
             valid = 0
         return render_template("admin_accounts.html", user=current_user, users=users, staff=staff, valid=valid, account_status=account_status)
@@ -655,8 +655,8 @@ def view_staff(staff_id):
     if(user_type != 0):
         return redirect(url_for('views.home'))
     else:
-        staff = staff_accounts.query.get(staff_id)
-        staffinfo = login.query.filter_by(email_address=staff_id).first()
+        staff = StaffAccounts.query.get(staff_id)
+        staffinfo = Login.query.filter_by(email_address=staff_id).first()
         if (staff is None):
             valid = 0
         if (staffinfo is None):
@@ -671,8 +671,8 @@ def disable_staff(staff_id):
     if(user_type != 0):
         return redirect(url_for('views.home'))
     else:
-        staff = staff_accounts.query.get(staff_id)
-        staffinfo = login.query.filter_by(email_address=staff_id).first()
+        staff = StaffAccounts.query.get(staff_id)
+        staffinfo = Login.query.filter_by(email_address=staff_id).first()
         if (staff is None or staffinfo is None):
             valid = 0
             return redirect(url_for('views.home'))
@@ -703,7 +703,7 @@ def writeBufferExcelFile():
     buffer = BytesIO()
     workbook = xlsxwriter.Workbook(buffer)
     worksheet = workbook.add_worksheet()
-    logs = logs.query.all()
+    logs = Logs.query.all()
 
     worksheet.write(0,0,"Log ID")
     worksheet.write(0,1,"Log Level")
