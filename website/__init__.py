@@ -43,7 +43,7 @@ def create_app():
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    from .models import login, user_accounts, admin_accounts, staff_accounts, product
+    from .models import login, user_accounts, admin_accounts, staff_accounts
 
     create_database(app)
 
@@ -54,24 +54,24 @@ def create_app():
     # tell flask how we load user
     @login_manager.user_loader
     def load_user(id):
-        return Login.query.get(int(id)) # primary key
+        return login.query.get(int(id)) # primary key
     
     def return_user_name(id):
-        user = Login.query.get(int(id))
+        user = login.query.get(int(id))
         if (user.account_type == 0):
-            name = AdminAccounts.query.filter_by(email_address=user.email_address).first()
+            name = admin_accounts.query.filter_by(email_address=user.email_address).first()
             return name.name
         if (user.account_type == 1):
-            name = StaffAccounts.query.filter_by(email_address=user.email_address).first()
+            name = staff_accounts.query.filter_by(email_address=user.email_address).first()
             return name.name
         if (user.account_type == 2):
 
-            name = UserAccounts.query.filter_by(email_address=user.email_address).first()
+            name = user_accounts.query.filter_by(email_address=user.email_address).first()
             return name.first_name
         
     
     def return_user_type(id):
-        user = Login.query.get(int(id))
+        user = login.query.get(int(id))
         return user.account_type
 
     app.jinja_env.globals.update(return_user_name=return_user_name,

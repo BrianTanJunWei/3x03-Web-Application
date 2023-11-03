@@ -123,5 +123,5 @@ def generate_unique_token(token_length=50):
     characters = string.ascii_letters + string.digits
     while True:
         token = ''.join(secrets.choice(characters) for _ in range(token_length))
-        if not PasswordResetToken.query.filter_by(token=token).first():
+        if not password_reset_token.query.filter_by(token=token).first():
             return token
