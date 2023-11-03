@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
-from .models import login, user_accounts, staff_accounts
+from .models import Login, UserAccounts, StaffAccounts
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
@@ -18,7 +18,7 @@ def login():
         password = request.form.get('password')
 
         # search db 
-        user = login.query.filter_by(email_address=email).first()
+        user = Login.query.filter_by(email_address=email).first()
         
         if user:
             if user.account_status == False:
@@ -67,7 +67,7 @@ def sign_up():
         password1 = request.form.get('password1')
         password2 = request.form.get('password2')
         # check if user exist
-        user = login.query.filter_by(email_address=email).first()
+        user = Login.query.filter_by(email_address=email).first()
         
 
         if user:
@@ -82,11 +82,11 @@ def sign_up():
             flash('Password must be at least 7 character', category='error')
         else:
             hashed_password = bcrypt.generate_password_hash(password1).decode('utf-8')
-            new_user_login = login(email_address=email, password=hashed_password,
+            new_user_login = Login(email_address=email, password=hashed_password,
                                    account_status= True, account_type=2)
-            new_user_accounts = user_accounts(email_address=email, address=address, first_name=first_name
+            new_user_accounts = UserAccounts(email_address=email, address=address, first_name=first_name
                                             ,last_name=last_name, contact_no=contact)
-            #new_user_accounts = admin_accounts(email_address=email, name= first_name + " " + last_name)
+            #new_user_accounts = AdminAccounts(email_address=email, name= first_name + " " + last_name)
             db.session.add(new_user_login)
             db.session.add(new_user_accounts)
             db.session.commit()
@@ -112,7 +112,7 @@ def create_staff():
             password1 = request.form.get('password1')
             password2 = request.form.get('password2')
             # check if user exist
-            user = login.query.filter_by(email_address=email).first()
+            user = Login.query.filter_by(email_address=email).first()
            
             
             if user:
@@ -125,10 +125,10 @@ def create_staff():
                 flash('Password must be at least 7 character', category='error')
             else:
                 hashed_password = bcrypt.generate_password_hash(password1).decode('utf-8')
-                new_user_login = login(email_address=email, password=hashed_password,
+                new_user_login = Login(email_address=email, password=hashed_password,
                                     account_status= True, account_type=1)
-                new_user_accounts = staff_accounts(email_address=email, name=name)
-                # new_user_accounts = admin_accounts(email_address=email, name= first_name + " " + last_name)
+                new_user_accounts = StaffAccounts(email_address=email, name=name)
+                # new_user_accounts = AdminAccounts(email_address=email, name= first_name + " " + last_name)
                 db.session.add(new_user_login)
                 db.session.add(new_user_accounts)
                 db.session.commit()
