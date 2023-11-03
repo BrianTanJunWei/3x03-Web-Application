@@ -1,12 +1,15 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
-from .models import *
+from .models import Login, UserAccounts, StaffAccounts
+
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
+from flask_sqlalchemy import SQLAlchemy
 
 auth = Blueprint('auth', __name__)
 bcrypt = Bcrypt()
+# Create an instance of the Flask app
 
 @auth.route('/login', methods=['GET','POST'])
 def login():
@@ -16,6 +19,7 @@ def login():
 
         # search db 
         user = Login.query.filter_by(email_address=email).first()
+        
         if user:
             if user.account_status == False:
                 flash('Account locked out, please contact the administrator', category="error")
@@ -27,7 +31,7 @@ def login():
                     
                     if user.account_type == 2:
                         #customer account
-                        flash('Logged in as a customer', category='success')
+                        # flash('Logged in as a customer', category='success')
                         return redirect(url_for('views.home'))
                     elif user.account_type == 1:
                         #staff account
@@ -50,7 +54,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('views.home'))
 
 @auth.route('/sign-up', methods=['GET', 'POST'])
 def sign_up():
@@ -64,6 +68,7 @@ def sign_up():
         password2 = request.form.get('password2')
         # check if user exist
         user = Login.query.filter_by(email_address=email).first()
+        
 
         if user:
             flash('Email already exist', category='error')
@@ -108,7 +113,8 @@ def create_staff():
             password2 = request.form.get('password2')
             # check if user exist
             user = Login.query.filter_by(email_address=email).first()
-
+           
+            
             if user:
                 flash('Email already exist', category='error')
             elif len(email) < 4:
