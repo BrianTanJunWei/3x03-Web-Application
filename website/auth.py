@@ -22,6 +22,19 @@ def login():
         
         if user:
             if user.account_status == False:
+                 log_entry = Logs(
+                    log_level='WARNING',
+                    log_type='Account Lockout',
+                    entity=email,
+                    log_desc='Account locked out due to multiple failed login attempts',
+                    log_time=datetime.now(),
+                    account_type=user.account_type,
+                    account_id=user.id,
+                    affected_id='user.id'
+                )
+                db.session.add(log_entry)
+                db.session.commit()
+            
                 flash('Account locked out, please contact the administrator', category="error")
             else:
                 # Verify the password using the stored salt and hashed password
@@ -65,15 +78,28 @@ def login():
                         entity='User',
                         log_desc=f'User login failed for email {email}.',
                         log_time=datetime.now(),
-                        account_type=0,  # Log as admin (or the appropriate account type)
-                        account_id='',
-                        affected_id=''
+                        account_type='null', 
+                        account_id='null',
+                        affected_id='null'
                     )
                     db.session.add(log_entry)
                     db.session.commit()
                     
                     flash('Incorrect email or password. Try again', category='error')
         else:
+              # Log user not found
+            log_entry = Logs(
+                log_level='WARNING',
+                log_type='Login Failure',
+                entity=email,
+                log_desc='User not found during login attempt',
+                log_time=datetime.now(),
+                account_type='',
+                account_id='',
+                affected_id=''
+            )
+            db.session.add(log_entry)
+            db.session.commit()
             flash('User not found. Check your email.', category='error')
     
     return render_template("login.html", user=current_user)    
@@ -81,6 +107,7 @@ def login():
 @auth.route('/logout')
 @login_required
 def logout():
+
     logout_user()
     return redirect(url_for('views.home'))
 
@@ -97,7 +124,6 @@ def sign_up():
         # check if user exist
         user = Login.query.filter_by(email_address=email).first()
         
-
         if user:
             flash('Email already exist', category='error')
         elif len(email) < 4:
@@ -121,6 +147,21 @@ def sign_up():
             
             login_user(new_user_login, remember=True) # allows user to stay logged in
 
+
+                    # Log user not found
+            log_entry = Logs(
+                log_level='WARNING',
+                log_type='Signup success',
+                entity=email,
+                log_desc='User signup successfully',
+                log_time=datetime.now(),
+                account_type='',
+                account_id='',
+                affected_id=''
+            )
+            db.session.add(log_entry)
+            db.session.commit()
+            
             flash('Sign up completed!', category='success')
             return redirect(url_for('views.home'))
 
