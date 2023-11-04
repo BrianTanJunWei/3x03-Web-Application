@@ -526,7 +526,7 @@ def reset_password(token):
 
             # Update the user's password (assuming you have a user_id associated with the token)
             user_id = token_obj.user_id
-            user = Login.query.filter_by(email_address=user_id).first()
+            user = Login.query.filter_by(id=user_id).first()
             
             if user:
                 # Update the user's password in the database
@@ -550,16 +550,16 @@ def request_password_reset():
 
     if request.method == 'POST':
         email = request.form.get('email')
-        user = UserAccounts.query.filter_by(email_address=email).first()
-
+        user = Login.query.filter_by(email_address=email).first()
+        user_details = UserAccounts.query.filter_by(user_id=user.id).first()
         if user:
             # Create a password reset token and save it in the database
-            token = PasswordResetToken(user_id=user.email_address)
+            token = PasswordResetToken(user_id=user.id)
             db.session.add(token)
             db.session.commit()
 
             # Send an email to the user with the password reset link
-            send_password_reset_email(user, token.token)
+            send_password_reset_email(user_details, token.token)
 
             flash('An email with instructions to reset your password has been sent.', 'info')
             return redirect(url_for('auth.login'))

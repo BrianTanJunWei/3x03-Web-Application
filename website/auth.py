@@ -94,7 +94,7 @@ def sign_up():
             login_user(new_user_login, remember=True) # allows user to stay logged in
 
             flash('Sign up completed!', category='success')
-            return redirect(url_for('views.home'))
+            return redirect(url_for('auth.login'))
 
     return render_template("sign_up.html", user=current_user)
 
