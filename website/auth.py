@@ -27,7 +27,7 @@ def login():
                 log_entry = Logs(
                     log_level='WARNING',
                     log_type='Account Lockout',
-                    entity=email,
+                    entity='User',
                     log_desc='Account locked out due to multiple failed login attempts',
                     log_time=datetime.now(),
                     account_type=user.account_type,
@@ -93,7 +93,7 @@ def login():
         log_entry = Logs(
             log_level='WARNING',
             log_type='Login Failure',
-            entity=email,
+            entity='User',
             log_desc='User not found during login attempt',
             log_time=datetime.now(),
             account_type='',
@@ -155,7 +155,7 @@ def sign_up():
             log_entry = Logs(
                 log_level='INFO',
                 log_type='Signup success',
-                entity=email,
+                entity='User',
                 log_desc='User signup successfully',
                 log_time=datetime.now(),
                 account_type='',
@@ -208,8 +208,8 @@ def create_staff():
                 log_entry = Logs(
                     log_level='INFO',
                     log_type='Signup success for staff',
-                    entity=email,
-                    log_desc='Staff signup successfully',
+                    entity='Admin',
+                    log_desc='Staff creation successfully',
                     log_time=datetime.now(),
                     account_type='',
                     account_id='',
