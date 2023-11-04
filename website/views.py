@@ -237,13 +237,17 @@ def edit_product(product_id):
             new_image_file = request.files['image']
             new_is_hidden = bool(request.form.get('is_hidden'))        
 
+            
             # Update the product's data
             product.name = new_name
             product.description = new_description
             product.price = new_price
-            product.image = new_image_file
             product.is_hidden = new_is_hidden
 
+            if new_image_file:
+                # Save the new image and update the product's image path
+                product.save_image(new_image_file)
+                
             # Commit the changes to the database
             db.session.commit()
             flash(f'{product.name} have been successfully modified.', 'success')
