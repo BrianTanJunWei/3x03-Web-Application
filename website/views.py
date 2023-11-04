@@ -217,24 +217,24 @@ def add_product():
         db.session.commit()
         flash(f'{new_product.name} with the price of ${new_product.price} have been added to the catalog.', 'success')
 
-        log_entry = Logs(
-            log_level='INFO',
-            log_type='Staff added product',
-            entity='Staff',
-            log_desc='Staff added new product into catalog',
-            log_time=datetime.now(),
-            account_type='staff',
-            account_id=staff.name,
-            affected_id=staff.email_address
-        )
-        db.session.add(log_entry)
-        db.session.commit()
+    log_entry = Logs(
+        log_level='INFO',
+        log_type='Staff added product',
+        entity='Staff',
+        log_desc='Staff added new product into catalog',
+        log_time=datetime.now(),
+        account_type='staff',
+        account_id=staff.name,
+        affected_id=staff.email_address
+    )
+    db.session.add(log_entry)
+    db.session.commit()
 
-        # Redirect to the shop page or wherever you want
-        return redirect(url_for('views.home'))
+    # Redirect to the shop page or wherever you want
+    return redirect(url_for('views.home'))
 
-    else:
-        flash("You do not have the permission to add product!", category="error")
+else:
+flash("You do not have the permission to add product!", category="error")
 
 
 # @views.route('/remove_product/<int:product_id>', methods=['POST'])
@@ -657,7 +657,7 @@ def request_password_reset():
     flash('No user found with this email address.', 'danger')
 
 
-    return render_template('request_password_reset.html')
+return render_template('request_password_reset.html')
 
 
 def send_password_reset_email(user, token):
