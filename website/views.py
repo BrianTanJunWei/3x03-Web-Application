@@ -15,7 +15,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from sqlalchemy.orm import joinedload
 import requests
 from flask_bcrypt import Bcrypt
-
+from .models import Login, UserAccounts, StaffAccounts, Logs
 views = Blueprint('views', __name__)
 bcrypt = Bcrypt()
 
@@ -112,6 +112,21 @@ def update_order_status(order_id):
             order.order_status = new_status
             db.session.commit()
             flash(f'Order status updated to {new_status} for order ID {order_id}.', 'success')
+    
+            # Fetch the staff member's details
+            staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
+             log_entry = Logs(
+                    log_level='INFO',
+                    log_type='Update Order',
+                    entity='Admin',
+                    log_desc=f'Staff Update Order ID {order_id} Successfully',
+                    log_time=datetime.now(),
+                    account_type='Staff',  # Use the user's account type
+                    account_id=staff.name,  # Use staff's name
+                    affected_id=staff.email_address  # Use staff's email
+                )
+                db.session.add(log_entry)
+                db.session.commit()
         else:
             flash(f'Order with ID {order_id} not found.', 'danger')
 
