@@ -551,7 +551,7 @@ def request_password_reset():
     if request.method == 'POST':
         email = request.form.get('email')
         user = Login.query.filter_by(email_address=email).first()
-        user_details = UserAccounts.query.filter_by(user_id=user.id).first()
+        user_details = UserAccounts.query.filter_by(email_address=user.email_address).first()
         if user:
             # Create a password reset token and save it in the database
             token = PasswordResetToken(user_id=user.id)
