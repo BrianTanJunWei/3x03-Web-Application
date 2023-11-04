@@ -285,7 +285,7 @@ def edit_product(product_id):
             # Commit the changes to the database
             db.session.commit()
             flash(f'{product.name} have been successfully modified.', 'success')
-                   staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
+            staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
             
             # Create a log entry
             log_entry = Logs(
