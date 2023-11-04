@@ -32,7 +32,7 @@ def login():
                     log_time=datetime.now(),
                     account_type=user.account_type,
                     account_id=user.id,
-                    affected_id='user.id'
+                    affected_id=user.email_address
                 )
                 db.session.add(log_entry)
                 db.session.commit()
