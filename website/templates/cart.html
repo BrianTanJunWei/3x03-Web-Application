@@ -3,6 +3,22 @@
 {% block title %}Cart{% endblock %}
 
 {% block content %}
+<script>
+  document.addEventListener("DOMContentLoaded", function(event) {
+      document.getElementById('goBackButton').addEventListener('click', function() {
+          console.log("Go back button clicked!");
+          history.go(-1);
+      });
+  });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function(event) {
+      document.getElementById('goBackButton1').addEventListener('click', function() {
+          console.log("Go back button clicked!");
+          history.go(-1);
+      });
+  });
+</script>
   <h1>Your Cart</h1>
   
   {% if cart_items_with_products %}
@@ -41,12 +57,12 @@
   <h3>Total Cost: ${{ "%.2f"|format(total_cost)|e }}</h3>
 
     <a href="{{ url_for('views.checkout')|e }}" class="btn btn-primary">Checkout</a>
-    <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
+    <a class="btn btn-primary" id="goBackButton">Go Back</a>
 
   {% else %}
 
     <p>Your cart is empty.</p>
-    <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
+    <a class="btn btn-primary" id="goBackButton1">Go Back</a>
 
   {% endif %}
 {% endblock %}

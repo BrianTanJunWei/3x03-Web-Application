@@ -2,6 +2,7 @@
 {% block title %}Accounts Management{% endblock %} 
 
 {% block content %}
+
 <br>
 <h1>Staff Details</h1>
 <br>
@@ -11,7 +12,7 @@
 
 {% if valid == 1%}
 <div>
-    <table class="table" style="width:100%">
+    <table class="table">
         <tr>
             <th>Staff Email: </th>
             <th>Name </th>
@@ -29,7 +30,9 @@
             <td>{{ user.account_status | e }}</td>
             <td>
                 <!-- Ensure the URL is properly constructed to prevent XSS -->
-                <a class="btn btn-primary" href="{{ url_for('staffaccounts', email_address=staff.email_address) }}" > More info </a>
+
+                <a class="btn btn-primary" href="{{ url_for('views.view_staff', staff_id=user.id) }}" > More info </a>
+
             </td>
         </tr>
         {% endif %}
@@ -40,6 +43,6 @@
 </div>
 {% endif %}
 
-<a role="button" href="{{ url_for('adminstaffcreation') }}" > Create New Staff Account </a>
+<a role="button" href="{{ url_for('auth.create_staff') }}" > Create New Staff Account </a>
 
 {% endblock %}

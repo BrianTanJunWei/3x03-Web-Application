@@ -3,6 +3,14 @@
 {% block title %}Order Details{% endblock %}
 
 {% block content %}
+<script>
+  document.addEventListener("DOMContentLoaded", function(event) {
+      document.getElementById('goBackButton').addEventListener('click', function() {
+          console.log("Go back button clicked!");
+          history.go(-1);
+      });
+  });
+</script>
   <h1>Order Details</h1>
   <!-- Escape dynamic content to prevent XSS -->
   <p>Order Date: {{ order.placed_date.strftime('%Y-%m-%d %H:%M:%S')|e }}</p>
@@ -36,5 +44,5 @@
     <p>No items in this order.</p>
   {% endif %}
   <!-- The back button doesn't require escaping as it doesn't involve dynamic content -->
-  <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
+  <a class="btn btn-primary" id="goBackButton">Go Back</a>
 {% endblock %}

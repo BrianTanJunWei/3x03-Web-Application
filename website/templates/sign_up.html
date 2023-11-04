@@ -71,6 +71,8 @@
             name="password1"
             placeholder="Enter password"
             required
+            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}"
+            title="Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one digit, and one special character."
         />
     </div>
     <div class="form-group">
@@ -82,6 +84,8 @@
             name="password2"
             placeholder="Confirm password"
             required
+            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}"
+            title="Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one digit, and one special character."
         />
     </div>
     <br />

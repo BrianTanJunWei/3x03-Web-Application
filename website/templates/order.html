@@ -19,7 +19,7 @@
         <!-- Escape dynamic content to prevent XSS -->
         <td>{{ order.placed_date|e }}</td>
         <td>{{ order.order_status|e }}</td>
-        <td>${{ "%.2f"|format(order.total_cost)|e }}</td>
+        <td>${{ "%.2f"|format(total_cost)|e }}</td>
         <!-- Escape the URL to prevent XSS -->
         <td><a href="{{ url_for('views.order_details', order_id=order.order_id)|e }}">View Details</a></td>
       </tr>

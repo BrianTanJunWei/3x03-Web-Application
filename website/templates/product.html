@@ -3,6 +3,15 @@
 {% block title %}{{ product.name | e }}{% endblock %} <!-- Automatic escaping of product name -->
 
 {% block content %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function(event) {
+      document.getElementById('goBackButton').addEventListener('click', function() {
+          console.log("Go back button clicked!");
+          history.go(-1);
+      });
+  });
+</script>
   <h1>{{ product.name | e }}</h1> <!-- Automatic escaping of product name -->
 
   <!-- Iterate through the product catalog and display each product -->
@@ -18,7 +27,7 @@
           <button type="submit" class="btn btn-primary">Add to Cart</button>
         </form>
         {% endif %}
-        <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
+        <a class="btn btn-primary" id="goBackButton">Go Back</a>
   </div>
 
 {% endblock %}

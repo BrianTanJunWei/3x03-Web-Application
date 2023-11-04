@@ -4,6 +4,32 @@
 
 {% block content %}
 
+<!-- Sanitization Script -->
+<script>
+  // Sanitize input to allow only alphanumeric characters and spaces
+  function sanitizeInput(input) {
+    return input.replace(/[^a-zA-Z0-9 ]/g, "");
+  }
+
+  // Sanitize input fields before submitting the "Add Product" form
+  document.getElementById('addProductForm').addEventListener('submit', function(event) {
+    var productName = document.getElementById('productName').value;
+    var productDescription = document.getElementById('productDescription').value;
+    document.getElementById('productName').value = sanitizeInput(productName);
+    document.getElementById('productDescription').value = sanitizeInput(productDescription);
+  });
+
+  // Sanitize input fields before submitting the "Edit Product" forms
+  {% for product in products %}
+  document.getElementById('editProductForm_{{ product.id }}').addEventListener('submit', function(event) {
+    var productName = document.getElementById('editProductName_{{ product.id }}').value;
+    var productDescription = document.getElementById('editProductDescription_{{ product.id }}').value;
+    document.getElementById('editProductName_{{ product.id }}').value = sanitizeInput(productName);
+    document.getElementById('editProductDescription_{{ product.id }}').value = sanitizeInput(productDescription);
+  });
+  {% endfor %}
+</script>
+
 <h1>Catalog</h1>
 {% if account_status == 1 %}
 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addProductModal">
@@ -129,31 +155,7 @@
   {% endfor %}
 </div>
 
-<!-- Sanitization Script -->
-<script>
-  // Sanitize input to allow only alphanumeric characters and spaces
-  function sanitizeInput(input) {
-    return input.replace(/[^a-zA-Z0-9 ]/g, "");
-  }
 
-  // Sanitize input fields before submitting the "Add Product" form
-  document.getElementById('addProductForm').addEventListener('submit', function(event) {
-    var productName = document.getElementById('productName').value;
-    var productDescription = document.getElementById('productDescription').value;
-    document.getElementById('productName').value = sanitizeInput(productName);
-    document.getElementById('productDescription').value = sanitizeInput(productDescription);
-  });
-
-  // Sanitize input fields before submitting the "Edit Product" forms
-  {% for product in products %}
-  document.getElementById('editProductForm_{{ product.id }}').addEventListener('submit', function(event) {
-    var productName = document.getElementById('editProductName_{{ product.id }}').value;
-    var productDescription = document.getElementById('editProductDescription_{{ product.id }}').value;
-    document.getElementById('editProductName_{{ product.id }}').value = sanitizeInput(productName);
-    document.getElementById('editProductDescription_{{ product.id }}').value = sanitizeInput(productDescription);
-  });
-  {% endfor %}
-</script>
 
 {% endblock %}
 
