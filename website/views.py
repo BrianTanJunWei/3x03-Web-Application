@@ -655,8 +655,8 @@ def view_staff(staff_id):
     if(user_type != 0):
         return redirect(url_for('views.home'))
     else:
-        staff = StaffAccounts.query.get(staff_id)
-        staffinfo = Login.query.filter_by(email_address=staff_id).first()
+        staff = Login.query.filter_by(id=staff_id).first()
+        staffinfo= StaffAccounts.query.get(staff.email_address)
         if (staff is None):
             valid = 0
         if (staffinfo is None):
@@ -671,16 +671,16 @@ def disable_staff(staff_id):
     if(user_type != 0):
         return redirect(url_for('views.home'))
     else:
-        staff = StaffAccounts.query.get(staff_id)
-        staffinfo = Login.query.filter_by(email_address=staff_id).first()
+        staff = Login.query.filter_by(id=staff_id).first()
+        staffinfo = StaffAccounts.query.get(staff.email_address)
         if (staff is None or staffinfo is None):
             valid = 0
             return redirect(url_for('views.home'))
         else:
-            if(staffinfo.account_status == True):
-                staffinfo.account_status = False
+            if(staff.account_status == True):
+                staff.account_status = False
             else:
-                staffinfo.account_status = True
+                staff.account_status = True
             db.session.commit()
             return render_template("admin_staff_details.html", user=current_user, staff=staff, staffinfo=staffinfo, valid=valid)
 
