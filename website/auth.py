@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
-from .models import Login, UserAccounts, StaffAccounts,Logs
+from .models import Login, UserAccounts, StaffAccounts, Logs
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
@@ -9,20 +9,22 @@ from flask_sqlalchemy import SQLAlchemy
 
 auth = Blueprint('auth', __name__)
 bcrypt = Bcrypt()
+
+
 # Create an instance of the Flask app
 
-@auth.route('/login', methods=['GET','POST'])
+@auth.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
 
-        # search db 
+        # search db
         user = Login.query.filter_by(email_address=email).first()
-        
+
         if user:
             if user.account_status == False:
-                 log_entry = Logs(
+                log_entry = Logs(
                     log_level='WARNING',
                     log_type='Account Lockout',
                     entity=email,
@@ -32,84 +34,86 @@ def login():
                     account_id=user.id,
                     affected_id='user.id'
                 )
-                db.session.add(log_entry)
-                db.session.commit()
-            
-                flash('Account locked out, please contact the administrator', category="error")
-            else:
-                # Verify the password using the stored salt and hashed password
-                if bcrypt.check_password_hash(user.password, password):
-                    # Password is correct, log the user in
-                    login_user(user, remember=True)
-
-                      # Log successful login
-                    log_entry = Logs(
-                        log_level='INFO',
-                        log_type='Login',
-                        entity='User',
-                        log_desc=f'User {user.email_address} logged in successfully.',
-                        log_time=datetime.now(),
-                        account_type=user.account_type,
-                        account_id=user.id,
-                        affected_id=''
-                    )
-                    db.session.add(log_entry)
-                    db.session.commit()
-                    
-                    if user.account_type == 2:
-                        #customer account
-                        # flash('Logged in as a customer', category='success')
-                        return redirect(url_for('views.home'))
-                    elif user.account_type == 1:
-                        #staff account
-                        flash('Logged in as a staff member', category='success')
-                        return redirect(url_for('views.home'))
-                    elif user.account_type == 0:
-                        #admin account
-                        flash('Logged in as an admin', category='success')
-                        return redirect(url_for('views.home'))
-                    else:
-                        flash('Unknown account type', category='error')
-                else:
-                    # Log unsuccessful login
-                    log_entry = Logs(
-                        log_level='ERROR',
-                        log_type='Login',
-                        entity='User',
-                        log_desc=f'User login failed for email {email}.',
-                        log_time=datetime.now(),
-                        account_type='null', 
-                        account_id='null',
-                        affected_id='null'
-                    )
-                    db.session.add(log_entry)
-                    db.session.commit()
-                    
-                    flash('Incorrect email or password. Try again', category='error')
-        else:
-              # Log user not found
-            log_entry = Logs(
-                log_level='WARNING',
-                log_type='Login Failure',
-                entity=email,
-                log_desc='User not found during login attempt',
-                log_time=datetime.now(),
-                account_type='',
-                account_id='',
-                affected_id=''
-            )
             db.session.add(log_entry)
             db.session.commit()
-            flash('User not found. Check your email.', category='error')
-    
-    return render_template("login.html", user=current_user)    
+
+            flash('Account locked out, please contact the administrator', category="error")
+        else:
+            # Verify the password using the stored salt and hashed password
+            if bcrypt.check_password_hash(user.password, password):
+                # Password is correct, log the user in
+                login_user(user, remember=True)
+
+                # Log successful login
+                log_entry = Logs(
+                    log_level='INFO',
+                    log_type='Login',
+                    entity='User',
+                    log_desc=f'User {user.email_address} logged in successfully.',
+                    log_time=datetime.now(),
+                    account_type=user.account_type,
+                    account_id=user.id,
+                    affected_id=''
+                )
+                db.session.add(log_entry)
+                db.session.commit()
+
+                if user.account_type == 2:
+                    # customer account
+                    # flash('Logged in as a customer', category='success')
+                    return redirect(url_for('views.home'))
+                elif user.account_type == 1:
+                    # staff account
+                    flash('Logged in as a staff member', category='success')
+                    return redirect(url_for('views.home'))
+                elif user.account_type == 0:
+                    # admin account
+                    flash('Logged in as an admin', category='success')
+                    return redirect(url_for('views.home'))
+                else:
+                    flash('Unknown account type', category='error')
+            else:
+                # Log unsuccessful login
+                log_entry = Logs(
+                    log_level='ERROR',
+                    log_type='Login',
+                    entity='User',
+                    log_desc=f'User login failed for email {email}.',
+                    log_time=datetime.now(),
+                    account_type='null',
+                    account_id='null',
+                    affected_id='null'
+                )
+                db.session.add(log_entry)
+                db.session.commit()
+
+                flash('Incorrect email or password. Try again', category='error')
+    else:
+        # Log user not found
+        log_entry = Logs(
+            log_level='WARNING',
+            log_type='Login Failure',
+            entity=email,
+            log_desc='User not found during login attempt',
+            log_time=datetime.now(),
+            account_type='',
+            account_id='',
+            affected_id=''
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+        flash('User not found. Check your email.', category='error')
+
+
+return render_template("login.html", user=current_user)
+
 
 @auth.route('/logout')
 @login_required
 def logout():
-
     logout_user()
     return redirect(url_for('views.home'))
+
 
 @auth.route('/sign-up', methods=['GET', 'POST'])
 def sign_up():
@@ -123,7 +127,7 @@ def sign_up():
         password2 = request.form.get('password2')
         # check if user exist
         user = Login.query.filter_by(email_address=email).first()
-        
+
         if user:
             flash('Email already exist', category='error')
         elif len(email) < 4:
@@ -137,18 +141,17 @@ def sign_up():
         else:
             hashed_password = bcrypt.generate_password_hash(password1).decode('utf-8')
             new_user_login = Login(email_address=email, password=hashed_password,
-                                   account_status= True, account_type=2)
+                                   account_status=True, account_type=2)
             new_user_accounts = UserAccounts(email_address=email, address=address, first_name=first_name
-                                            ,last_name=last_name, contact_no=contact)
-            #new_user_accounts = AdminAccounts(email_address=email, name= first_name + " " + last_name)
+                                             , last_name=last_name, contact_no=contact)
+            # new_user_accounts = AdminAccounts(email_address=email, name= first_name + " " + last_name)
             db.session.add(new_user_login)
             db.session.add(new_user_accounts)
             db.session.commit()
-            
-            login_user(new_user_login, remember=True) # allows user to stay logged in
 
+            login_user(new_user_login, remember=True)  # allows user to stay logged in
 
-                    # User Signup 
+            # User Signup
             log_entry = Logs(
                 log_level='INFO',
                 log_type='Signup success',
@@ -161,18 +164,19 @@ def sign_up():
             )
             db.session.add(log_entry)
             db.session.commit()
-            
+
             flash('Sign up completed!', category='success')
             return redirect(url_for('views.home'))
 
     return render_template("sign_up.html", user=current_user)
+
 
 @auth.route('/adminstaffcreation', methods=['GET', 'POST'])
 @login_required
 def create_staff():
     account_status = (current_user.account_type)
     user_type = current_user.account_type
-    if(user_type != 0):
+    if (user_type != 0):
         return redirect(url_for('views.home'))
     else:
         if request.method == 'POST':
@@ -182,8 +186,7 @@ def create_staff():
             password2 = request.form.get('password2')
             # check if user exist
             user = Login.query.filter_by(email_address=email).first()
-           
-            
+
             if user:
                 flash('Email already exist', category='error')
             elif len(email) < 4:
@@ -195,14 +198,13 @@ def create_staff():
             else:
                 hashed_password = bcrypt.generate_password_hash(password1).decode('utf-8')
                 new_user_login = Login(email_address=email, password=hashed_password,
-                                    account_status= True, account_type=1)
+                                       account_status=True, account_type=1)
                 new_user_accounts = StaffAccounts(email_address=email, name=name)
                 # new_user_accounts = AdminAccounts(email_address=email, name= first_name + " " + last_name)
                 db.session.add(new_user_login)
                 db.session.add(new_user_accounts)
                 db.session.commit()
 
-                       
                 log_entry = Logs(
                     log_level='INFO',
                     log_type='Signup success for staff',
