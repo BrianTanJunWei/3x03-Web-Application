@@ -234,12 +234,14 @@ def edit_product(product_id):
             new_name = request.form.get('name')
             new_description = request.form.get('description')
             new_price = request.form.get('price')
+            new_image_file = request.files['image']
             new_is_hidden = bool(request.form.get('is_hidden'))        
 
             # Update the product's data
             product.name = new_name
             product.description = new_description
             product.price = new_price
+            product.image = new_image_file
             product.is_hidden = new_is_hidden
 
             # Commit the changes to the database
