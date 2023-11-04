@@ -115,20 +115,6 @@ def update_order_status(order_id):
     
             # Fetch the staff member's details
             staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
-
-            
-            log_entry = Logs(
-                log_level='INFO',
-                log_type='Update Order',
-                entity='Admin',
-                log_desc='Staff Update Order',
-                log_time=datetime.now(),
-                account_type='Staff',  # Use the user's account type
-                account_id=staff.name,  # Use staff's name
-                affected_id=staff.email_address  # Use staff's email
-            )
-            db.session.add(log_entry)
-            db.session.commit()
         
         else:
             flash(f'Order with ID {order_id} not found.', 'danger')
