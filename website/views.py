@@ -189,38 +189,38 @@ def add_product():
     else:
         flash("You do not have the permission to add product!", category="error")
 
-@views.route('/remove_product/<int:product_id>', methods=['POST'])
-def remove_product(product_id):
-    # Check the user's account status
-    account_status = (current_user.account_type)
+# @views.route('/remove_product/<int:product_id>', methods=['POST'])
+# def remove_product(product_id):
+#     # Check the user's account status
+#     account_status = (current_user.account_type)
 
-    if account_status == 1:
-        # Retrieve the product to be removed from the database
-        product_to_remove = Product.query.get(product_id)
+#     if account_status == 1:
+#         # Retrieve the product to be removed from the database
+#         product_to_remove = Product.query.get(product_id)
 
-        if product_to_remove:
-            product_name = product_to_remove.name
-            # Check for related cart items
-            cart_items = CartItem.query.filter_by(product_id=product_id).all()
-            if cart_items:
-                # Remove related cart items
-                for cart_item in cart_items:
-                    db.session.delete(cart_item)
+#         if product_to_remove:
+#             product_name = product_to_remove.name
+#             # Check for related cart items
+#             cart_items = CartItem.query.filter_by(product_id=product_id).all()
+#             if cart_items:
+#                 # Remove related cart items
+#                 for cart_item in cart_items:
+#                     db.session.delete(cart_item)
             
-            # Perform the removal
-            db.session.delete(product_to_remove)
-            db.session.commit()
+#             # Perform the removal
+#             db.session.delete(product_to_remove)
+#             db.session.commit()
 
-            flash(f'{product_name} have been removed from the catalog.', 'success')
+#             flash(f'{product_name} have been removed from the catalog.', 'success')
 
-            # Redirect to the catalog or another appropriate page
-            return redirect(url_for('views.home'))
-        else:
-            flash("Product not found.", category="error")
-    else:
-        flash("You do not have the permission to remove products.", category="error")
+#             # Redirect to the catalog or another appropriate page
+#             return redirect(url_for('views.home'))
+#         else:
+#             flash("Product not found.", category="error")
+#     else:
+#         flash("You do not have the permission to remove products.", category="error")
 
-    return redirect(url_for('views.catalog'))
+#     return redirect(url_for('views.catalog'))
 
 @views.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
 def edit_product(product_id):
