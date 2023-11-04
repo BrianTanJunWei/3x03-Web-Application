@@ -14,8 +14,8 @@
             href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
             crossorigin="anonymous"
     />
-    <!-- Escape the title to prevent XSS -->
-    <title>{{ block('title')|e }}</title>
+    <!-- Define the title block with a default value -->
+    <title>{% block title %}Default Title{% endblock %}</title>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
