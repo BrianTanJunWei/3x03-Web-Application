@@ -148,9 +148,9 @@ def sign_up():
             login_user(new_user_login, remember=True) # allows user to stay logged in
 
 
-                    # Log user not found
+                    # User Signup 
             log_entry = Logs(
-                log_level='WARNING',
+                log_level='INFO',
                 log_type='Signup success',
                 entity=email,
                 log_desc='User signup successfully',
@@ -202,6 +202,19 @@ def create_staff():
                 db.session.add(new_user_accounts)
                 db.session.commit()
 
+                       
+                log_entry = Logs(
+                    log_level='INFO',
+                    log_type='Signup success for staff',
+                    entity=email,
+                    log_desc='Staff signup successfully',
+                    log_time=datetime.now(),
+                    account_type='',
+                    account_id='',
+                    affected_id='AdminAccounts.email_address'
+                )
+                db.session.add(log_entry)
+                db.session.commit()
                 flash('Staff Account Created!', category='success')
                 return redirect(url_for('views.staffaccounts'))
 
