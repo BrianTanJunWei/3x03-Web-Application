@@ -93,7 +93,7 @@ def login():
         log_entry = Logs(
             log_level='WARNING',
             log_type='Login Failure',
-            entity='User',
+            entity='',
             log_desc='User not found during login attempt',
             log_time=datetime.now(),
             account_type='',
