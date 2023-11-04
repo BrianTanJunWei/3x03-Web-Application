@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
-from .models import Login, UserAccounts, StaffAccounts
+from .models import Login, UserAccounts, StaffAccounts,Logs
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
@@ -30,7 +30,7 @@ def login():
                     login_user(user, remember=True)
 
                       # Log successful login
-                    log_entry = LogEntry(
+                    log_entry = Logs(
                         log_level='INFO',
                         log_type='Login',
                         entity='User',
@@ -59,7 +59,7 @@ def login():
                         flash('Unknown account type', category='error')
                 else:
                     # Log unsuccessful login
-                    log_entry = LogEntry(
+                    log_entry = Logs(
                         log_level='ERROR',
                         log_type='Login',
                         entity='User',
