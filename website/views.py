@@ -550,11 +550,11 @@ def request_password_reset():
 
     if request.method == 'POST':
         email = request.form.get('email')
-        user = UserAccounts.query.filter_by(email_address=email).first()
+        user = Login.query.filter_by(email_address=email).first()
 
         if user:
             # Create a password reset token and save it in the database
-            token = PasswordResetToken(user_id=user.email_address)
+            token = PasswordResetToken(user_id=user.id)
             db.session.add(token)
             db.session.commit()
 
@@ -569,9 +569,10 @@ def request_password_reset():
     return render_template('request_password_reset.html')
 
 def send_password_reset_email(user, token):
+    user_details = UserAccounts.query.filter(user.id).first()
     # Create the email content
     email_content = f"""
-    <p>Hello {user.first_name},</p>
+    <p>Hello {user_details.first_name},</p>
     <p>You recently requested to reset your password. Click the link below to reset your password:</p>
     <p><a href="{request.host_url}reset_password/{token}">Reset Password</a></p>
     <p>If you didn't make this request, you can ignore this email.</p>
@@ -584,7 +585,7 @@ def send_password_reset_email(user, token):
         'Content-Type': 'application/json',
     }
     data = {
-        'to': [{'email': user.email_address}],
+        'to': [{'email': user_details.email_address}],
         'subject': 'Password Reset Request',
         'htmlContent': email_content,
         'sender': {'email': SENDER_EMAIL},
