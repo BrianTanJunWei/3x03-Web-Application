@@ -28,6 +28,20 @@ def login():
                 if bcrypt.check_password_hash(user.password, password):
                     # Password is correct, log the user in
                     login_user(user, remember=True)
+
+                      # Log successful login
+                    log_entry = LogEntry(
+                        log_level='INFO',
+                        log_type='Login',
+                        entity='User',
+                        log_desc=f'User {user.email_address} logged in successfully.',
+                        log_time=datetime.now(),
+                        account_type=user.account_type,
+                        account_id=user.id,
+                        affected_id=''
+                    )
+                    db.session.add(log_entry)
+                    db.session.commit()
                     
                     if user.account_type == 2:
                         #customer account
@@ -44,6 +58,20 @@ def login():
                     else:
                         flash('Unknown account type', category='error')
                 else:
+                    # Log unsuccessful login
+                    log_entry = LogEntry(
+                        log_level='ERROR',
+                        log_type='Login',
+                        entity='User',
+                        log_desc=f'User login failed for email {email}.',
+                        log_time=datetime.now(),
+                        account_type=0,  # Log as admin (or the appropriate account type)
+                        account_id='',
+                        affected_id=''
+                    )
+                    db.session.add(log_entry)
+                    db.session.commit()
+                    
                     flash('Incorrect email or password. Try again', category='error')
         else:
             flash('User not found. Check your email.', category='error')
