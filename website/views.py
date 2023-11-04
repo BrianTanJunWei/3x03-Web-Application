@@ -285,11 +285,7 @@ def edit_product(product_id):
             # Commit the changes to the database
             db.session.commit()
             flash(f'{product.name} have been successfully modified.', 'success')
-            
-            # Redirect to the product's details page or wherever you want
-            return redirect(url_for('views.home', product_id=product.id))
-            # Fetch the staff member's details
-            staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
+                   staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
             
             # Create a log entry
             log_entry = Logs(
@@ -300,11 +296,15 @@ def edit_product(product_id):
                 log_time=datetime.now(),
                 account_type=account_status,
                 account_id=current_user.email_address,
-                affected_id=order_id
+                affected_id=product_id
             )
             
             db.session.add(log_entry)
             db.session.commit()
+            # Redirect to the product's details page or wherever you want
+            return redirect(url_for('views.home', product_id=product.id))
+            # Fetch the staff member's details
+     
     else:
         flash("You do not have the permission to modify product info!", category="error")
 
