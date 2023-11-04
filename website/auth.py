@@ -34,8 +34,8 @@ def login():
                     account_id=user.id,
                     affected_id='user.id'
                 )
-            db.session.add(log_entry)
-            db.session.commit()
+                db.session.add(log_entry)
+                db.session.commit()
 
             flash('Account locked out, please contact the administrator', category="error")
         else:
