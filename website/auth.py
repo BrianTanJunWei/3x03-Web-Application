@@ -23,7 +23,7 @@ def login():
         user = Login.query.filter_by(email_address=email).first()
 
         if user:
-            if user.account_status == 0:
+            if user.account_status == False:
                 log_entry = Logs(
                     log_level='WARNING',
                     log_type='Account Lockout',
@@ -37,60 +37,60 @@ def login():
                 db.session.add(log_entry)
                 db.session.commit()
 
-            flash('Account locked out, please contact the administrator', category="error")
-        else:
-            # Verify the password using the stored salt and hashed password
-            if bcrypt.check_password_hash(user.password, password):
-                # Password is correct, log the user in
-                login_user(user, remember=True)
-
-                # Log successful login
-                log_entry = Logs(
-                    log_level='INFO',
-                    log_type='Login',
-                    entity='User',
-                    log_desc=f'User {user.email_address} logged in successfully.',
-                    log_time=datetime.now(),
-                    account_type=user.account_type,
-                    account_id=user.id,
-                    affected_id=''
-                )
-                db.session.add(log_entry)
-                db.session.commit()
-
-                if user.account_type == 2:
-                    # customer account
-                    # flash('Logged in as a customer', category='success')
-                    return redirect(url_for('views.home'))
-                elif user.account_type == 1:
-                    # staff account
-                    flash('Logged in as a staff member', category='success')
-                    return redirect(url_for('views.home'))
-                elif user.account_type == 0:
-                    # admin account
-                    flash('Logged in as an admin', category='success')
-                    return redirect(url_for('views.home'))
-                else:
-                    flash('Unknown account type', category='error')
+                flash('Account locked out, please contact the administrator', category="error")
             else:
-                # Log unsuccessful login
-                log_entry = Logs(
-                    log_level='ERROR',
-                    log_type='Login',
-                    entity='User',
-                    log_desc=f'User login failed for email {email}.',
-                    log_time=datetime.now(),
-                    account_type='null',
-                    account_id='null',
-                    affected_id='null'
-                )
-                db.session.add(log_entry)
-                db.session.commit()
+                # Verify the password using the stored salt and hashed password
+                if bcrypt.check_password_hash(user.password, password):
+                    # Password is correct, log the user in
+                    login_user(user, remember=True)
 
-                flash('Incorrect email or password. Try again', category='error')
-    else:
+                    # Log successful login
+                    log_entry = Logs(
+                        log_level='INFO',
+                        log_type='Login',
+                        entity='User',
+                        log_desc=f'User {user.email_address} logged in successfully.',
+                        log_time=datetime.now(),
+                        account_type=user.account_type,
+                        account_id=user.id,
+                        affected_id=''
+                    )
+                    db.session.add(log_entry)
+                    db.session.commit()
 
-        flash('User not found. Check your email.', category='error')
+                    if user.account_type == 2:
+                        # customer account
+                        # flash('Logged in as a customer', category='success')
+                        return redirect(url_for('views.home'))
+                    elif user.account_type == 1:
+                        # staff account
+                        flash('Logged in as a staff member', category='success')
+                        return redirect(url_for('views.home'))
+                    elif user.account_type == 0:
+                        # admin account
+                        flash('Logged in as an admin', category='success')
+                        return redirect(url_for('views.home'))
+                    else:
+                        flash('Unknown account type', category='error')
+                else:
+                    # Log unsuccessful login
+                    log_entry = Logs(
+                        log_level='ERROR',
+                        log_type='Login',
+                        entity='User',
+                        log_desc=f'User login failed for email {email}.',
+                        log_time=datetime.now(),
+                        account_type='null',
+                        account_id='null',
+                        affected_id='null'
+                    )
+                    db.session.add(log_entry)
+                    db.session.commit()
+
+                    flash('Incorrect email or password. Try again', category='error')
+        else:
+
+            flash('User not found. Check your email.', category='error')
 
 
     return render_template("login.html", user=current_user)
