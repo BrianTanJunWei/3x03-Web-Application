@@ -199,7 +199,25 @@ def add_product():
         db.session.add(new_product)
         db.session.commit()
         flash(f'{new_product.name} with the price of ${new_product.price} have been added to the catalog.', 'success')
-
+        
+        # Fetch the staff member's details
+        staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
+        
+        # Create a log entry
+        log_entry = Logs(
+            log_level='INFO',  # You can adjust the log level as needed
+            log_type='Add Product',
+            entity='Products',
+            log_desc=f'{new_product.name} with the price of ${new_product.price} have been added to the catalog.',
+            log_time=datetime.now(),
+            account_type=account_status,
+            account_id=current_user.email_address,
+            affected_id=new_product.name
+        )
+        
+        db.session.add(log_entry)
+        db.session.commit()
+        
         # Redirect to the shop page or wherever you want
         return redirect(url_for('views.home'))
     else:
@@ -270,6 +288,23 @@ def edit_product(product_id):
             
             # Redirect to the product's details page or wherever you want
             return redirect(url_for('views.home', product_id=product.id))
+            # Fetch the staff member's details
+            staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
+            
+            # Create a log entry
+            log_entry = Logs(
+                log_level='INFO',  # You can adjust the log level as needed
+                log_type='Edit Product',
+                entity='Product',
+                log_desc=f'{product.name} have been successfully modified.',
+                log_time=datetime.now(),
+                account_type=account_status,
+                account_id=current_user.email_address,
+                affected_id=order_id
+            )
+            
+            db.session.add(log_entry)
+            db.session.commit()
     else:
         flash("You do not have the permission to modify product info!", category="error")
 
