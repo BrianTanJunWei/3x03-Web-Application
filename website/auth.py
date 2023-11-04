@@ -105,7 +105,7 @@ def login():
         flash('User not found. Check your email.', category='error')
 
 
-return render_template("login.html", user=current_user)
+    return render_template("login.html", user=current_user)
 
 
 @auth.route('/logout')
