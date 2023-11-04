@@ -8,64 +8,64 @@
     <br>
     <h1>Invalid Log Parameters</h1>
     <br>
-    <a role="button" href= "/logs" >Return to previous page</button>
+    <a role="button" href="/logs">Return to previous page</a>
     {% endif %}
 
     {% if valid == 1 %}
     <br>
-    <h1>Log {{logs.log_id}}</h1>
+    <h1>Log {{ logs.log_id }}</h1>
 
     <table class="table" style="width:100%">
-        
+
         <tr>
             <td>Log ID: </td>
-            <td>{{logs.log_id}}</td>
+            <td>{{ logs.log_id }}</td>
         </tr>
 
         <tr>
             <td>Log Level: </td>
-            <td>{{logs.log_level}}</td>
+            <td>{{ logs.log_level }}</td>
         </tr>
 
         <tr>
             <td>Log Type: </td>
-            <td>{{logs.log_type}}</td>
+            <td>{{ logs.log_type }}</td>
         </tr>
 
         <tr>
             <td>Entity: </td>
-            <td>{{logs.entity}}</td>
+            <td>{{ logs.entity }}</td>
         </tr>
 
         <tr>
             <td>Log Description: </td>
-            <td>{{logs.log_desc}}</td>
+            <td>{{ logs.log_desc }}</td>
         </tr>
 
         <tr>
             <td>Log Time: </td>
-            <td>{{logs.log_time}}</td>
+            <td>{{ logs.log_time }}</td>
         </tr>
 
         <tr>
             <td>Account Type: </td>
-            <td>{{logs.account_type}}</td>
+            <td>{{ logs.account_type }}</td>
         </tr>
 
         <tr>
             <td>Account ID: </td>
-            <td>{{logs.account_id}}</td>
+            <td>{{ logs.account_id }}</td>
         </tr>
 
         <tr>
             <td>Affected ID: </td>
-            <td>{{logs.affected_id}}</td>
+            <td>{{ logs.affected_id }}</td>
         </tr>
+    </table>
     <br>
-    <a role="button" href= "/logs" >Return to previous page</button>
-    {%endif%}
+    <a role="button" href="/logs">Return to previous page</a>
+    {% endif %}
 
 </div>
 
 {% endblock %}
-

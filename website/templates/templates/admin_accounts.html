@@ -23,14 +23,16 @@
         {% for staff in staff %}
         {% if user.email_address == staff.email_address%}
         <tr>
-            <td>{{staff.email_address}}</td>
-            <td>{{staff.name}}</td>
-            <td>{{user.account_status}}</td>
+            <!-- Ensure the email_address, name, and account_status are properly escaped to prevent XSS -->
+            <td>{{ staff.email_address | e }}</td>
+            <td>{{ staff.name | e }}</td>
+            <td>{{ user.account_status | e }}</td>
             <td>
-                <a class="btn btn-primary" href= "/staffaccounts/{{staff.email_address}}" > More info </button>
+                <!-- Ensure the URL is properly constructed to prevent XSS -->
+                <a class="btn btn-primary" href="{{ url_for('staffaccounts', email_address=staff.email_address) }}" > More info </a>
             </td>
         </tr>
-        {%endif%}
+        {% endif %}
         {% endfor %}
         {% endfor %}
 
@@ -38,6 +40,6 @@
 </div>
 {% endif %}
 
-<a role="button" href= "/adminstaffcreation" > Create New Staff Account </button>
+<a role="button" href="{{ url_for('adminstaffcreation') }}" > Create New Staff Account </a>
 
 {% endblock %}

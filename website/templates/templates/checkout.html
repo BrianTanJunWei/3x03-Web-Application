@@ -18,16 +18,21 @@
     <tbody>
       {% for cart_item, product in cart_items_with_products %}
         <tr>
-          <td>{{ product.name }}</td>
-          <td>${{ "%.2f"|format(product.price) }}</td>
-          <td>{{ cart_item.quantity }}</td>
-          <td>${{ "%.2f"|format(product.price * cart_item.quantity) }}</td>
+          <!-- Explicitly escaping output here -->
+          <td>{{ product.name | e }}</td>
+          <!-- Explicitly formatting and escaping output here -->
+          <td>${{ "%.2f"|format(product.price) | e }}</td>
+          <!-- Explicitly escaping output here -->
+          <td>{{ cart_item.quantity | e }}</td>
+          <!-- Explicitly formatting and escaping output here -->
+          <td>${{ "%.2f"|format(product.price * cart_item.quantity) | e }}</td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
 
-  <p>Total Cost: ${{ "%.2f"|format(total_cost) }}</p>
+  <!-- Explicitly formatting and escaping output here -->
+  <p>Total Cost: ${{ "%.2f"|format(total_cost) | e }}</p>
 
   <h2>Payment</h2>
   <form method="post" action="{{ url_for('views.checkout') }}" id="payment-form">
@@ -43,6 +48,7 @@
     <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
   </form>
 
+  <!-- Including Stripe script for secure payment handling -->
   <script src="https://js.stripe.com/v3/"></script>
   <script>
     var stripe = Stripe('pk_test_51Moo38DXM06BKmN03uoX9yhJ5Z6bqOuTrkBUESdYnTnijqP0fxxqcaoUGkfYjfDssLnqLBlIolRBJQzklgrIyc8T00M6er8s4d');

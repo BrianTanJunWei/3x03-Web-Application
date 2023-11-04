@@ -19,12 +19,16 @@
     <tbody>
       {% for cart_item, product in cart_items_with_products %}
       <tr>
-        <td>{{ product.name }}</td>
-        <td>${{ "%.2f"|format(product.price) }}</td>
-        <td>{{ cart_item.quantity }}</td>
-        <td>${{ "%.2f"|format(product.price * cart_item.quantity) }}</td>
+        <!-- Explicitly escape dynamic content for security -->
+        <td>{{ product.name|e }}</td>
+        <!-- Format and escape price -->
+        <td>${{ "%.2f"|format(product.price)|e }}</td>
+        <!-- Escape quantity -->
+        <td>{{ cart_item.quantity|e }}</td>
+        <!-- Format and escape total -->
+        <td>${{ "%.2f"|format(product.price * cart_item.quantity)|e }}</td>
         <td>
-          <form method="POST" action="{{ url_for('views.remove_from_cart', product_id=product.id) }}">
+          <form method="POST" action="{{ url_for('views.remove_from_cart', product_id=product.id)|e }}">
             <button type="submit" class="btn btn-danger">Remove</button>
           </form>
         </td>
@@ -33,15 +37,16 @@
     </tbody>
   </table>
 
-  <h3>Total Cost: ${{ "%.2f"|format(total_cost) }}</h3>
+  <!-- Escape total cost -->
+  <h3>Total Cost: ${{ "%.2f"|format(total_cost)|e }}</h3>
 
-    <a href="{{ url_for('views.checkout') }}" class="btn btn-primary">Checkout</a>
+    <a href="{{ url_for('views.checkout')|e }}" class="btn btn-primary">Checkout</a>
     <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
 
   {% else %}
 
     <p>Your cart is empty.</p>
     <a class="btn btn-primary" href="javascript:history.go(-1)">Go Back</a>
-    
+
   {% endif %}
 {% endblock %}

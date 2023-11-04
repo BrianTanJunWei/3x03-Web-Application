@@ -1,0 +1,54 @@
+{% extends 'customerBase.html' %}
+
+{% block title %}Staff Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if valid == 0 %}
+    <br>
+    <h1>Invalid Staff Parameters</h1>
+    <br>
+    <a role="button" href="/staffaccounts">Return to previous page</a>
+    {% endif %}
+
+    {% if valid == 1 %}
+    <br>
+    <h1>Information for: {{ staff.name | e }}</h1> <!-- Ensuring staff name is escaped -->
+
+    <table class="table" style="width:100%">
+
+        <tr>
+            <td>Staff Email: </td>
+            <td>{{ staff.email_address | e }}</td> <!-- Ensuring email is escaped -->
+        </tr>
+
+        <tr>
+            <td>Staff Name: </td>
+            <td>{{ staff.name | e }}</td> <!-- Ensuring staff name is escaped -->
+        </tr>
+
+        <tr>
+            <td>Account Status: </td>
+            <td>{{ staffinfo.account_status }}</td> <!-- Account_status is a boolean, no need for escaping -->
+        </tr>
+
+    </table>
+
+    <div class="col-6">
+        <!-- Ensure that staff.email_address is properly escaped or validated if part of the URL -->
+        <a class="button" href="/staffdisable/{{ staff.email_address | e }}">
+            {% if staffinfo.account_status ==true %}
+            Deactivate account
+            {% else %}
+            Activate account
+            {% endif %}
+        </a> <!-- Corrected closing tag -->
+    </div>
+    <div class="col-6">
+        <a class="button" href="/staffaccounts">Return to previous page</a> <!-- Corrected closing tag -->
+    </div>
+    <br>
+    {% endif %}
+</div>
+
+{% endblock %}

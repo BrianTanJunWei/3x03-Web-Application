@@ -1,0 +1,76 @@
+{% extends 'customerBase.html' %}
+
+{% block title %}Create Staff{% endblock %}
+
+{% block content%}
+<h1>Create Staff Account</h1>
+<form method="POST" id="createStaffForm">
+    <div class="form-group">
+        <label for="email">Email Address</label>
+        <input
+                type="email"
+                class="form-control"
+                id="email"
+                name="email"
+                placeholder="Enter email"
+                required
+                pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                title="Please enter a valid email address."
+        />
+    </div>
+    <div class="form-group">
+        <label for="name">Name</label>
+        <input
+                type="text"
+                class="form-control"
+                id="name"
+                name="name"
+                placeholder="Enter name"
+                required
+                pattern="[A-Za-z ]+"
+                title="Name should only contain letters and spaces."
+        />
+    </div>
+    <div class="form-group">
+        <label for="password1">Password</label>
+        <input
+                type="password"
+                class="form-control"
+                id="password1"
+                name="password1"
+                placeholder="Enter password"
+                required
+                minlength="8"
+                pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W)"
+                title="Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one digit, and one special character."
+        />
+    </div>
+    <div class="form-group">
+        <label for="password2">Password (Confirm)</label>
+        <input
+                type="password"
+                class="form-control"
+                id="password2"
+                name="password2"
+                placeholder="Confirm password"
+                required
+                minlength="8"
+                pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W)"
+                title="Password must match the one above and include at least one uppercase letter, one lowercase letter, one digit, and one special character."
+        />
+    </div>
+    <br />
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+<script>
+document.getElementById('createStaffForm').addEventListener('submit', function(event) {
+    var password1 = document.getElementById('password1').value;
+    var password2 = document.getElementById('password2').value;
+
+    if (password1 !== password2) {
+        alert('Passwords do not match.');
+        event.preventDefault(); // Prevent form submission
+    }
+});
+</script>
+{% endblock %}

@@ -1,33 +1,38 @@
-{% extends 'base.html' %} 
+{% extends 'customerBase.html' %} 
 
 {% block title %}Catalog{% endblock %} 
 
 {%block content %}
 
-<h1>Catalog</h1>
+<h1>Customer Catalog</h1>
 <!-- Iterate through the product catalog and display each product -->
 <div class="row">
   {% for product in products %}
   <!-- ... existing product card code ... -->
-  {% if not product.is_hidden %}
+  {% if not product.is_hidden or account_status == 2 %}
   <div class="col-lg-4 col-md-6 col-sm-12">
     <a href="{{ url_for('views.view_product', product_id=product.id) }}" class="card-link">
       <div class="card">
-        <img src="data:image/jpeg;base64,{{ product.image }}" class="card-img-top" alt="{{ product.name }}">
+        <!-- Image is base64 encoded, which doesn't need escaping -->
+        <img src="data:image/jpeg;base64,{{ product.image }}" class="card-img-top" alt="{{ product.name | e }}">
         <div class="card-body">
-          <h5 href="{{ url_for('views.view_product', product_id=product.id, account_status=account_status) }}" class="card-link">{{ product.name }}</h5>
-          <p class="card-text">{{ product.description }}</p>
-          <p class="card-text">${{ "%.2f"|format(product.price) }}</p>
+          <!-- Explicitly escaping output here -->
+          <h5 href="{{ url_for('views.view_product', product_id=product.id, account_status=account_status) }}" class="card-link">{{ product.name | e }}</h5>
+          <!-- Explicitly escaping output here -->
+          <p class="card-text">{{ product.description | e }}</p>
+          <!-- Explicitly formatting and escaping output here -->
+          <p class="card-text">${{ "%.2f"|format(product.price) | e }}</p>
+          <form method="POST" action="{{ url_for('views.add_to_cart', product_id=product.id) }}">
+            <button type="submit" class="btn btn-primary">Add to Cart</button>
+          </form>
         </div>
       </div>
     </a>
   </div>
-
   {% endif %}
   {% endfor %}
 </div>
 {% endblock %}
-
 
 <!-- Include jQuery and Bootstrap JS in your HTML -->
 <script

@@ -1,0 +1,52 @@
+{% extends 'customerBase.html' %}
+
+{% block title %}Order Confirmation{% endblock %}
+
+{% block content %}
+  <h1>Order Confirmation</h1>
+
+  <p>Thank you for your order!</p>
+  <p>Your payment has been processed successfully, and your order is confirmed.</p>
+
+  <h2>Order Details</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Price</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cart_item, product in cart_items_with_products %}
+        <tr>
+          <!-- Escape the product name for security -->
+          <td>{{ product.name|e }}</td>
+          <!-- Escape the quantity -->
+          <td>{{ cart_item.quantity|e }}</td>
+          <!-- Format and escape the product price -->
+          <td>${{ "%.2f"|format(product.price)|e }}</td>
+          <!-- Format and escape the total price -->
+          <td>${{ "%.2f"|format(product.price * cart_item.quantity)|e }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Format and escape the total cost -->
+  <p>Total Cost: ${{ "%.2f"|format(total_cost)|e }}</p>
+
+  <p>Your order will be shipped to the following address:</p>
+  <!-- Escape the user address for security -->
+  <p>{{ current_user.address|e }}</p>
+
+  <p>If you have any questions or need further assistance, please contact our support team.</p>
+
+  <!-- The action URLs are escaped for security -->
+  <a href="{{ url_for('views.clear_cart')|e }}" class="btn btn-primary">Back to catalog</a>
+  <a href="{{ url_for('views.view_pdf')|e }}" target="_blank" class="btn btn-primary">View PDF</a>
+
+</div>
+
+{% endblock %}

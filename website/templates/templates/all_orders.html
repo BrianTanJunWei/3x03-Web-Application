@@ -30,13 +30,15 @@
       <tbody>
         {% for order in orders %}
         <tr>
-          <td>{{ order.order_id }}</td>
-          <td>{{ customer_first_names[loop.index0] }}</td>
+          <td>{{ order.order_id | e }}</td>
+          <!-- Ensure the customer name is sanitized -->
+          <td>{{ customer_first_names[loop.index0] | e }}</td>
           <td>{{ order.placed_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
           <td>${{ "%.2f"|format(total_costs[loop.index0]) }}</td>
-          <td>{{ order.order_status }}</td>
+          <!-- Ensure the order status is sanitized -->
+          <td>{{ order.order_status | e }}</td>
           <td>
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#orderModal{{ order.order_id }}">
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#orderModal{{ order.order_id | e }}">
               Update status
             </button>
           </td>
@@ -44,23 +46,22 @@
         {% endfor %}
       </tbody>
     </table>
-    
+
     {% for order in orders %}
-    <div class="modal fade" id="orderModal{{ order.order_id }}" tabindex="-1" role="dialog" aria-labelledby="orderModalLabel{{ order.order_id }}" aria-hidden="true">
+    <div class="modal fade" id="orderModal{{ order.order_id | e }}" tabindex="-1" role="dialog" aria-labelledby="orderModalLabel{{ order.order_id | e }}" aria-hidden="true">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="orderModalLabel{{ order.order_id }}">Update Order Status</h5>
+            <h5 class="modal-title" id="orderModalLabel{{ order.order_id | e }}">Update Order Status</h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
           <div class="modal-body">
-              <!-- Add a form here to update the order status -->
-              <!-- <form method="POST" action="{{ update_order_url }}"> -->
               <form method="POST" action="{{ url_for('views.update_order_status', order_id=order.order_id) }}">
-  
-                  <input type="hidden" name="order_id" value="{{ order.order_id }}">
+
+                  <!-- Sanitize any hidden input values -->
+                  <input type="hidden" name="order_id" value="{{ order.order_id | e }}">
                   <div class="form-group">
                       <label for="new_status">New Status</label>
                       <select class="form-control" name="new_status">
@@ -84,10 +85,10 @@
     document.getElementById('filter_status').addEventListener('change', function() {
         var filterValue = this.value;
         var rows = document.querySelectorAll('#orderTableContainer tbody tr');
-  
+
         rows.forEach(function(row) {
             var statusCell = row.querySelector('td:nth-child(5)'); // Assuming the status cell is the 5th cell in each row.
-  
+
             if (filterValue === '' || statusCell.textContent === filterValue) {
                 row.style.display = ''; // Show the row.
             } else {
@@ -97,10 +98,10 @@
     });
     document.getElementById('generatePdfButton').addEventListener('click', function() {
         var filterValue = document.getElementById('filter_status').value;
-        window.location = `/generate_pdf?filter_value=${filterValue}`;
+        // Sanitize the URL parameter to prevent XSS
+        window.location = `/generate_pdf?filter_value=${encodeURIComponent(filterValue)}`;
     });
   </script>
 
-{% endif %}  
+{% endif %}
 {% endblock %}
-
