@@ -6,9 +6,19 @@ from . import db
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
+import re
 
 auth = Blueprint('auth', __name__)
 bcrypt = Bcrypt()
+
+email_regex = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+password_regex = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$")
+
+def validate_email(email):
+    return email_regex.match(email)
+
+def validate_password(password):
+    return password_regex.match(password)
 
 
 # Create an instance of the Flask app
@@ -18,6 +28,11 @@ def login():
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
+
+        # Validate email and password format
+        if not validate_email(email):
+            flash('Invalid email format.', category='error')
+            return render_template("login.html", user=current_user)
 
         # search db
         user = Login.query.filter_by(email_address=email).first()
@@ -53,7 +68,7 @@ def login():
                         log_time=datetime.now(),
                         account_type=user.account_type,
                         account_id=user.id,
-                        affected_id=''
+                        affected_id='null'
                     )
                     db.session.add(log_entry)
                     db.session.commit()
@@ -124,8 +139,8 @@ def sign_up():
             flash('Invalid first name', category='error')
         elif password1 != password2:
             flash('Passwords does not match', category='error')
-        elif len(password1) < 7:
-            flash('Password must be at least 7 character', category='error')
+        elif not validate_password(password1):
+            flash('Password must be at least 8 characters, including 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special character.', category='error')
         else:
             hashed_password = bcrypt.generate_password_hash(password1).decode('utf-8')
             new_user_login = Login(email_address=email, password=hashed_password,
@@ -146,9 +161,9 @@ def sign_up():
                 entity='User',
                 log_desc='User signup successfully',
                 log_time=datetime.now(),
-                account_type='',
-                account_id='',
-                affected_id=''
+                account_type='null',
+                account_id='null',
+                affected_id='null'
             )
             db.session.add(log_entry)
             db.session.commit()
@@ -177,12 +192,12 @@ def create_staff():
 
             if user:
                 flash('Email already exist', category='error')
-            elif len(email) < 4:
-                flash('Invalid email', category='error')
+            elif not validate_email(email):
+                flash('Invalid email address.', category='error')
             elif password1 != password2:
                 flash('Passwords does not match', category='error')
-            elif len(password1) < 7:
-                flash('Password must be at least 7 character', category='error')
+            elif not validate_password(password1):
+                flash('Password must be at least 8 characters, including 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special character.', category='error')
             else:
                 hashed_password = bcrypt.generate_password_hash(password1).decode('utf-8')
                 new_user_login = Login(email_address=email, password=hashed_password,
@@ -199,8 +214,8 @@ def create_staff():
                     entity='Admin',
                     log_desc='Staff creation successfully',
                     log_time=datetime.now(),
-                    account_type='',
-                    account_id='',
+                    account_type='null',
+                    account_id='null',
                     affected_id='AdminAccounts.email_address'
                 )
                 db.session.add(log_entry)
