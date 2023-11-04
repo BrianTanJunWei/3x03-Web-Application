@@ -23,7 +23,7 @@ def login():
         user = Login.query.filter_by(email_address=email).first()
 
         if user:
-            if user.account_status == 1:
+            if user.account_status == 0:
                 log_entry = Logs(
                     log_level='WARNING',
                     log_type='Account Lockout',
