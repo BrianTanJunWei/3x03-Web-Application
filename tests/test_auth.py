@@ -3,6 +3,17 @@ from flask import current_app
 from website import create_app, db
 from website.models import *
 from website.auth import bcrypt
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables from .env file
+
+SECRET_KEY = os.getenv('SECRET_KEY')
+TEST_STRIPE_SECRET_KEY = os.getenv('TEST_STRIPE_SECRET_KEY')
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
+SENDINBLUE_API_KEY = os.getenv('SENDINBLUE_API_KEY')
+SENDER_EMAIL = os.getenv('SENDER_EMAIL')
+DATABASE_NAME = os.getenv('DATABASE_NAME')
+DATABASE_TEST_NAME = os.getenv('DATABASE_TEST_NAME')
 
 class AuthTestCase(unittest.TestCase):
     def setUp(self):
