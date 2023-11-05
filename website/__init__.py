@@ -15,8 +15,7 @@ STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
 SENDINBLUE_API_KEY = os.getenv('SENDINBLUE_API_KEY')
 SENDER_EMAIL = os.getenv('SENDER_EMAIL')
 DATABASE_NAME = os.getenv('DATABASE_NAME')
-# DATABASE_TEST_NAME = os.getenv('DATABASE_TEST_NAME')
-DATABASE_TEST_NAME = 'test_db'
+DATABASE_TEST_NAME = os.getenv('DATABASE_TEST_NAME')
 
 def create_app():
     app = Flask(__name__)
@@ -126,3 +125,8 @@ def create_database(app):
         if not path.exists(db_path): 
             db.create_all()
             print('Created Database!')
+          # Create the testing database
+        db_test_path = path.join('website', DATABASE_TEST_NAME)
+        if not path.exists(db_test_path):
+            db.create_all()
+            print('Created Testing Database!')
