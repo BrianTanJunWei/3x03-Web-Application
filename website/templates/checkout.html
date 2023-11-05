@@ -44,7 +44,7 @@
 
   <h2>Payment</h2>
   <form method="post" action="{{ url_for('views.checkout') }}" id="payment-form">
-    {{ csrf_token() }}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-group">
       <label for="card-element">Credit Card</label>
       <div id="card-element">

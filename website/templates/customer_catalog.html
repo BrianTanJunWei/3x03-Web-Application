@@ -23,7 +23,7 @@
           <!-- Explicitly formatting and escaping output here -->
           <p class="card-text">${{ "%.2f"|format(product.price) | e }}</p>
           <form method="POST" action="{{ url_for('views.add_to_cart', product_id=product.id) }}">
-            {{ csrf_token() }}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-primary">Add to Cart</button>
           </form>
         </div>

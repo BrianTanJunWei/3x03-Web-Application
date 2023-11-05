@@ -22,7 +22,7 @@
       <div class="modal-body">
         <!-- Form to add a new product -->
         <form id="addProductForm" method="POST" action="{{ url_for('views.add_product') }}" enctype="multipart/form-data">
-          {{ csrf_token() }}
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="form-group">
             <label for="productName">Product Name</label>
             <input type="text" class="form-control" id="productName" name="name" required maxlength="100">
@@ -84,7 +84,7 @@
           <div class="modal-body">
             <!-- Form to edit the existing product -->
             <form id="editProductForm_{{ product.id }}" method="POST" action="{{ url_for('views.edit_product', product_id=product.id) }}" enctype="multipart/form-data">
-              {{ csrf_token() }}
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="form-group">
                 <label for="editProductName_{{ product.id }}">Product Name</label>
                 <input type="text" class="form-control" id="editProductName_{{ product.id }}" name="name" value="{{ product.name }}" required maxlength="100">

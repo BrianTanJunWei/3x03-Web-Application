@@ -23,7 +23,7 @@
 
   <div id="edit-form" class="hide-form">
     <form id="updateForm" method="POST">
-      {{ csrf_token() }}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="form-group">
         <label for="first_name">First Name</label>
         <!-- Ensure the first_name is properly escaped to prevent XSS -->
