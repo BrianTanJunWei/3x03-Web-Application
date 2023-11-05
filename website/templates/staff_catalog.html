@@ -146,6 +146,12 @@
       event.preventDefault();
       return;
     }
+
+    if (productImage && productImage.size > 65535) {
+      alert('The image is too large. Please use an image smaller than 64KB.');
+      event.preventDefault();
+      return;
+    }
   });
 
   // Front-end validation for "Edit Product" forms
@@ -172,6 +178,12 @@
     // Validate product image
     if (productImage && !['image/png', 'image/jpeg'].includes(productImage.type)) {
       alert('Invalid image format. Allowed types: png, jpg, jpeg.');
+      event.preventDefault();
+      return;
+    }
+
+    if (productImage && productImage.size > 65535) {
+      alert('The image is too large. Please use an image smaller than 64KB.');
       event.preventDefault();
       return;
     }
