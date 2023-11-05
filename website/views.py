@@ -2,6 +2,7 @@ import io
 from datetime import datetime
 from flask import Blueprint, flash, make_response, make_response, render_template, request, redirect, url_for, send_file
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
 from sqlalchemy import func
 from .models import *
 from . import SENDER_EMAIL, SENDINBLUE_API_KEY, db
@@ -16,8 +17,21 @@ from sqlalchemy.orm import joinedload
 import requests
 from flask_bcrypt import Bcrypt
 from .models import Login, UserAccounts, StaffAccounts, Logs
+from html import escape
+import os
+import re
+
 views = Blueprint('views', __name__)
 bcrypt = Bcrypt()
+
+#Valid format for files to be uploaded.
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+MAX_IMAGE_SIZE = 65535
+
+#To be used in adding and editting of products.
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @views.route('/')
 def home():
@@ -103,7 +117,13 @@ def update_order_status(order_id):
     if account_status == 1:
         # Get the new status from the form
         new_status = request.form.get('new_status')
-    
+
+        # Validate the new status
+        valid_statuses = ["Processing", "Shipped", "Delivered"]
+        if new_status not in valid_statuses:
+            flash('Invalid order status.', 'danger')
+            return redirect(url_for('views.order_details', order_id=order_id))
+
         # Find the order by ID
         order = Order.query.get(order_id)
 
@@ -143,9 +163,19 @@ def update_order_status(order_id):
             customer_first_names.append(customer_details.first_name)
             total_costs.append(calculate_total_cost(order))
         return render_template("all_orders.html", user=current_user, orders=orders, customer_first_names=customer_first_names, account_status=account_status, total_costs=total_costs)
+
 @views.route('/generate_pdf', methods=['GET'])
 def generate_pdf_content():
     filter_value = request.args.get('filter_value')
+
+    # Define the valid statuses
+    valid_statuses = ["Paid", "Processing", "Shipped", "Delivered", "All", ""]
+
+    # Validate the filter_value
+    if filter_value not in valid_statuses:
+        flash('Invalid filter value.', 'danger')
+        return redirect(url_for('views.some_view'))  # Redirect to a relevant view
+
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
 
@@ -189,20 +219,48 @@ def add_product():
         image_file = request.files['image']
         is_hidden = bool(request.form.get('is_hidden'))
 
+        # Validate and sanitize inputs
+        if not name or len(name) > 100:
+            flash('Invalid product name.', 'error')
+            return redirect(url_for('views.add_product_form'))
+
+        if not description:
+            flash('Invalid product description.', 'error')
+            return redirect(url_for('views.add_product_form'))
+
+        try:
+            price = float(price)
+        except ValueError:
+            flash('Invalid price.', 'error')
+            return redirect(url_for('views.add_product_form'))
+
+        if image_file and allowed_file(image_file.filename):
+            # Check if the image size is within the limit
+            image_size = len(image_file.read())
+            if image_size > MAX_IMAGE_SIZE:
+                flash('The image is too large. Please use an image smaller than 64KB.', 'error')
+                return redirect(url_for('views.add_product_form'))
+            # Reset the file pointer after reading the file
+            image_file.seek(0)
+            filename = secure_filename(image_file.filename)
+        else:
+            flash('Invalid image format. Allowed types: png, jpg, jpeg.', 'error')
+            return redirect(url_for('views.add_product_form'))
+
         # Create a new product
         new_product = Product(name=name, description=description, price=price, is_hidden=is_hidden)
 
         # Save the image
         new_product.save_image(image_file)
-    
+
         # Add the new product to the database
         db.session.add(new_product)
         db.session.commit()
         flash(f'{new_product.name} with the price of ${new_product.price} have been added to the catalog.', 'success')
-        
+
         # Fetch the staff member's details
         staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
-        
+
         # Create a log entry
         log_entry = Logs(
             log_level='INFO',  # You can adjust the log level as needed
@@ -214,14 +272,15 @@ def add_product():
             account_id=current_user.email_address,
             affected_id=new_product.name
         )
-        
+
         db.session.add(log_entry)
         db.session.commit()
-        
+
         # Redirect to the shop page or wherever you want
         return redirect(url_for('views.home'))
     else:
         flash("You do not have the permission to add product!", category="error")
+
 
 # @views.route('/remove_product/<int:product_id>', methods=['POST'])
 # def remove_product(product_id):
@@ -269,9 +328,36 @@ def edit_product(product_id):
             new_description = request.form.get('description')
             new_price = request.form.get('price')
             new_image_file = request.files['image']
-            new_is_hidden = bool(request.form.get('is_hidden'))        
+            new_is_hidden = bool(request.form.get('is_hidden'))
 
-            
+            # Validate and sanitize inputs
+            if not new_name or len(new_name) > 100:
+                flash('Invalid product name.', 'error')
+                return redirect(url_for('views.edit_product_form', product_id=product_id))
+
+            if not new_description:
+                flash('Invalid product description.', 'error')
+                return redirect(url_for('views.edit_product_form', product_id=product_id))
+
+            try:
+                new_price = float(new_price)
+            except ValueError:
+                flash('Invalid price.', 'error')
+                return redirect(url_for('views.edit_product_form', product_id=product_id))
+
+            if new_image_file and allowed_file(new_image_file.filename):
+                # Check if the image size is within the limit
+                image_size = len(new_image_file.read())
+                if image_size > MAX_IMAGE_SIZE:
+                    flash('The image is too large. Please use an image smaller than 64KB.', 'error')
+                    return redirect(url_for('views.edit_product_form', product_id=product_id))
+                # Reset the file pointer after reading the file
+                new_image_file.seek(0)
+                filename = secure_filename(new_image_file.filename)
+            else:
+                flash('Invalid image format. Allowed types: png, jpg, jpeg.', 'error')
+                return redirect(url_for('views.edit_product_form', product_id=product_id))
+
             # Update the product's data
             product.name = new_name
             product.description = new_description
@@ -281,12 +367,12 @@ def edit_product(product_id):
             if new_image_file:
                 # Save the new image and update the product's image path
                 product.save_image(new_image_file)
-                
+
             # Commit the changes to the database
             db.session.commit()
             flash(f'{product.name} have been successfully modified.', 'success')
             staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
-            
+
             # Create a log entry
             log_entry = Logs(
                 log_level='INFO',  # You can adjust the log level as needed
@@ -298,30 +384,53 @@ def edit_product(product_id):
                 account_id=current_user.email_address,
                 affected_id=product_id
             )
-            
+
             db.session.add(log_entry)
             db.session.commit()
             # Redirect to the product's details page or wherever you want
             return redirect(url_for('views.home', product_id=product.id))
-            # Fetch the staff member's details
-     
+
     else:
         flash("You do not have the permission to modify product info!", category="error")
+
 
 # Route to account page
 @views.route('/account', methods=['GET', 'POST'])
 @login_required # prevents ppl from going to homepage without logging in
 def account():
     user = UserAccounts.query.filter_by(email_address=current_user.email_address).first()
-    account_status = (current_user.account_type)
+    account_status = current_user.account_type
     # Handle form submission if you want to allow users to update their information
     if request.method == 'POST':
-        
-        # Handle form submission for the "Edit Information" button
-        user.first_name = request.form.get('first_name')
-        user.last_name = request.form.get('last_name')
-        user.address = request.form.get('address')
-        user.contact_no = request.form.get('contact_no')
+
+        # Get data from the form
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        address = request.form.get('address')
+        contact_no = request.form.get('contact_no')
+
+        # Validate and sanitize inputs
+        if not first_name or len(first_name) > 150:
+            flash('Invalid first name.', 'error')
+            return redirect(url_for('views.account'))
+
+        if not last_name or len(last_name) > 150:
+            flash('Invalid last name.', 'error')
+            return redirect(url_for('views.account'))
+
+        if not address or len(address) > 150:
+            flash('Invalid address.', 'error')
+            return redirect(url_for('views.account'))
+
+        if not contact_no.isdigit() or len(contact_no) != 8:
+            flash('Invalid contact number. It should be 8 digits.', 'error')
+            return redirect(url_for('views.account'))
+
+        # Update user information
+        user.first_name = first_name
+        user.last_name = last_name
+        user.address = address
+        user.contact_no = contact_no
         
         # Commit changes to the database
         db.session.commit()
@@ -394,9 +503,15 @@ def checkout():
     return render_template('checkout.html', user=current_user, cart_items_with_products=cart_items_with_products, total_cost=total_cost)
 
 @views.route('/confirmation')
+@login_required
 def confirmation():
     user = current_user
     cart = Cart.get_active_cart(user.id)  # Use the get_active_cart method from your models
+
+    if not cart:
+        # Handle the case where the cart doesn't exist or is empty
+        flash('No active cart found.', 'error')
+        return redirect(url_for('views.home'))
 
     cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
     total_cost = sum(item.product.price * item.quantity for item in cart_items)
@@ -437,6 +552,7 @@ def mark_order_as_paid(user, total_cost):
         db.session.commit()    
 
 @views.route('/view_pdf')
+@login_required
 def view_pdf():
     user = UserAccounts.query.filter_by(email_address=current_user.email_address).first()
     cart = Cart.get_active_cart(current_user.id)
@@ -459,61 +575,66 @@ def view_pdf():
 
     return response
 
+
 def generate_order_pdf(user, cart_items, total_cost):
-    
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    try:
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
 
-    # Create a list to hold PDF elements
-    elements = []
+        # Create a list to hold PDF elements
+        elements = []
 
-    # Styles for the PDF
-    styles = getSampleStyleSheet()
+        # Styles for the PDF
+        styles = getSampleStyleSheet()
 
-    # Title
-    title = Paragraph("Order Summary", styles['Title'])
-    elements.append(title)
+        # Title
+        title = Paragraph("Order Summary", styles['Title'])
+        elements.append(title)
 
-    # Date
-    current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    date_text = f"Order Date: {current_date}"
-    elements.append(Paragraph(date_text, styles['Normal']))
-    
-    # User information
-    user_info = f"User: {user.first_name} {user.last_name}"
-    if user.address:
-        user_info += f"<br />Address: {user.address}"
-    elements.append(Paragraph(user_info, styles['Normal']))
-    elements.append(Spacer(1, 12))
+        # Date
+        current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        date_text = f"Order Date: {current_date}"
+        elements.append(Paragraph(date_text, styles['Normal']))
 
-    # Table to display order details
-    order_data = [["Product", "Quantity", "Price", "Subtotal"]]
-    for cart_item in cart_items:
-        product = product = Product.query.get(cart_item.product_id)
-        order_data.append([product.name, cart_item.quantity, f"${product.price:.2f}", f"${cart_item.quantity * product.price:.2f}"])
-    order_table = Table(order_data)
-    order_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    elements.append(order_table)
-    elements.append(Spacer(1, 12))
+        # User information
+        user_info = f"User: {escape(user.first_name)} {escape(user.last_name)}"
+        if user.address:
+            user_info += f"<br />Address: {escape(user.address)}"
+        elements.append(Paragraph(user_info, styles['Normal']))
+        elements.append(Spacer(1, 12))
 
-    # Total cost
-    total_cost_text = f"Total Cost: ${total_cost:.2f}"
-    elements.append(Paragraph(total_cost_text, styles['Normal']))
+        # Table to display order details
+        order_data = [["Product", "Quantity", "Price", "Subtotal"]]
+        for cart_item in cart_items:
+            product = Product.query.get(cart_item.product_id)
+            order_data.append([escape(product.name), cart_item.quantity, f"${product.price:.2f}",
+                               f"${cart_item.quantity * product.price:.2f}"])
+        order_table = Table(order_data)
+        order_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        elements.append(order_table)
+        elements.append(Spacer(1, 12))
 
-    doc.build(elements)
+        # Total cost
+        total_cost_text = f"Total Cost: ${total_cost:.2f}"
+        elements.append(Paragraph(total_cost_text, styles['Normal']))
 
-    pdf_data = buffer.getvalue()
-    buffer.close()
+        doc.build(elements)
 
-    return pdf_data
+        pdf_data = buffer.getvalue()
+        buffer.close()
+
+        return pdf_data
+    except Exception as e:
+        flash('Failed to generate order summary PDF.', 'error')
+        return redirect(url_for('views.cart'))
 
 @views.route('/clear_cart')
 @login_required
@@ -522,37 +643,50 @@ def clear_cart():
     # Get the user's active cart
     cart = Cart.get_active_cart(user.id)
 
-    if cart:
+    # Ensure that the cart belongs to the current user
+    if cart and cart.user_id == user.id:
         # Delete all cart items associated with the cart
         CartItem.query.filter_by(cart_id=cart.cart_id).delete()
         # Commit the changes to remove cart items
         db.session.commit()
+        flash('Your cart has been cleared.', 'success')
+    else:
+        flash('No active cart found.', 'error')
 
     # Redirect the user back to the catalog
     return redirect(url_for('views.home'))
-
 
 @views.route('/add_to_cart/<int:product_id>', methods=['POST'])
 @login_required
 def add_to_cart(product_id):
     user = current_user
+    # Ensure the product exists
     product = Product.query.get(product_id)
-    
+    if product is None:
+        flash('Product not found.', 'error')
+        return redirect(url_for('views.home'))
+
     # Check if the user has an active cart, and create one if it doesn't exist
     cart = Cart.get_active_cart(user.id)
     if cart is None:
         cart = Cart(customer=user.id)
         db.session.add(cart)
         db.session.commit()
-        
-    # Add the product to the user's cart
-    cart_item = CartItem(cart_id=cart.cart_id, product_id=product.id, quantity=1)
-    
-    db.session.add(cart_item)
+
+    # Check if the product is already in the cart
+    existing_cart_item = CartItem.query.filter_by(cart_id=cart.cart_id, product_id=product.id).first()
+    if existing_cart_item:
+        # If the product is already in the cart, increase the quantity
+        existing_cart_item.quantity += 1
+    else:
+        # Add the product to the user's cart
+        cart_item = CartItem(cart_id=cart.cart_id, product_id=product.id, quantity=1)
+        db.session.add(cart_item)
+
     db.session.commit()
-    
+
     flash(f'{product.name} added to your cart.', 'success')
-    
+
     return redirect(url_for('views.home'))
 
 @views.route('/remove_from_cart/<int:product_id>', methods=['GET', 'POST'])
@@ -581,6 +715,11 @@ def reset_password(token):
             # Retrieve the new password from the form
             new_password = request.form.get('new_password')
 
+            # Validate the new password
+            if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=])[A-Za-z\d@#$%^&+=]{8,}$', new_password):
+                flash('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.', 'danger')
+                return render_template('reset_password.html')
+
             # Update the user's password (assuming you have a user_id associated with the token)
             user_id = token_obj.user_id
             user = Login.query.filter_by(id=user_id).first()
@@ -607,6 +746,12 @@ def request_password_reset():
 
     if request.method == 'POST':
         email = request.form.get('email')
+
+        # Validate the email format
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+            flash('Invalid email address format.', 'danger')
+            return render_template('request_password_reset.html')
+
         user = Login.query.filter_by(email_address=email).first()
         user_details = UserAccounts.query.filter_by(email_address=user.email_address).first()
         if user:
@@ -626,6 +771,11 @@ def request_password_reset():
     return render_template('request_password_reset.html')
 
 def send_password_reset_email(user, token):
+    # Validate the user's email and first name to ensure they contain expected data
+    if not user.email_address or not user.first_name:
+        print("Invalid user data.")
+        return
+
     # Create the email content
     email_content = f"""
     <p>Hello {user.first_name},</p>
@@ -655,8 +805,6 @@ def send_password_reset_email(user, token):
             print(f"Error sending password reset email: {response.status_code}")
     except Exception as e:
         print(f"An error occurred while sending the password reset email: {str(e)}")
-
-
 
 
 # admin - useless
