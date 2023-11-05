@@ -81,8 +81,11 @@ def create_app():
 
 def create_database(app):
     with app.app_context():
-        db_path = path.join('website', DATABASE_NAME)
-        db.create_all()
+        if app.config['TESTING']:
+            db_path = path.join('website', DATABASE_TEST_NAME)
+        else:
+            db_path = path.join('website', DATABASE_NAME)
+        
         if not path.exists(db_path): 
             db.create_all()
             print('Created Database!')
