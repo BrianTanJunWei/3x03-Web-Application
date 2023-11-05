@@ -170,7 +170,7 @@ def sign_up():
             db.session.commit()
 
             flash('Sign up completed!', category='success')
-            return redirect(url_for('views.home'))
+            return redirect(url_for('auth.login'))
 
     return render_template("sign_up.html", user=current_user)
 
