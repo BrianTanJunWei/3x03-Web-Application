@@ -685,7 +685,7 @@ def clear_cart():
     cart = Cart.get_active_cart(user.id)
 
     # Ensure that the cart belongs to the current user
-    if cart and cart.user_id == user.id:
+    if cart and cart.customer == user.id:
         # Delete all cart items associated with the cart
         CartItem.query.filter_by(cart_id=cart.cart_id).delete()
         # Commit the changes to remove cart items
