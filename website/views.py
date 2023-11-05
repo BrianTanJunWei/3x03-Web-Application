@@ -742,30 +742,27 @@ def reset_password(token):
 
 @views.route('/request_password_reset', methods=['GET', 'POST'])
 def request_password_reset():
-
     if request.method == 'POST':
         email = request.form.get('email')
-
-        # Validate the email format
-        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
-            flash('Invalid email address format.', 'danger')
-            return render_template('request_password_reset.html')
-
         user = Login.query.filter_by(email_address=email).first()
-        user_details = UserAccounts.query.filter_by(email_address=user.email_address).first()
+        
         if user:
-            # Create a password reset token and save it in the database
-            token = PasswordResetToken(user_id=user.id)
-            db.session.add(token)
-            db.session.commit()
+            user_details = UserAccounts.query.filter_by(email_address=user.email_address).first()
+            if user_details:
+                # Create a password reset token and save it in the database
+                token = PasswordResetToken(user_id=user.id)
+                db.session.add(token)
+                db.session.commit()
 
-            # Send an email to the user with the password reset link
-            send_password_reset_email(user_details, token.token)
+                # Send an email to the user with the password reset link
+                send_password_reset_email(user_details, token.token)
 
-            flash('An email with instructions to reset your password has been sent.', 'info')
-            return redirect(url_for('auth.login'))
-
-        flash('No user found with this email address.', 'danger')
+                flash('An email with instructions to reset your password has been sent.', 'info')
+                return redirect(url_for('auth.login'))
+            else:
+                flash('No user details found for this email address.', 'danger')
+        else:
+            flash('No user found with this email address.', 'danger')
 
     return render_template('request_password_reset.html')
 
