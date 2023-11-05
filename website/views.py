@@ -29,7 +29,7 @@ class ImageValidationError(Exception):
 
 #Valid format for files to be uploaded.
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-MAX_IMAGE_SIZE = 65535
+MAX_IMAGE_SIZE = 16777216
 
 #To be used in adding and editting of products.
 def allowed_file(filename):
@@ -250,7 +250,7 @@ def add_product():
                     raise ImageValidationError('Invalid image format. Allowed types: png, jpg, jpeg.')
 
                 if not file_size_okay(image_file):
-                    raise ImageValidationError('The image is too large. Please use an image smaller than 64KB.')
+                    raise ImageValidationError('The image is too large. Please use an image smaller than 16MB.')
 
                 filename = secure_filename(image_file.filename)
             else:
@@ -376,7 +376,7 @@ def edit_product(product_id):
                         raise ImageValidationError('Invalid image format. Allowed types: png, jpg, jpeg.')
 
                     if not file_size_okay(new_image_file):
-                        raise ImageValidationError('The image is too large. Please use an image smaller than 64KB.')
+                        raise ImageValidationError('The image is too large. Please use an image smaller than 16MB.')
 
                     filename = secure_filename(new_image_file.filename)
 
