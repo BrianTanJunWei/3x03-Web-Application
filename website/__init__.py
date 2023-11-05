@@ -16,8 +16,6 @@ SENDER_EMAIL = os.getenv('SENDER_EMAIL')
 DATABASE_NAME = os.getenv('DATABASE_NAME')
 DATABASE_TEST_NAME = os.getenv('DATABASE_TEST_NAME')
 
-print(f"DATABASE_NAME: {os.getenv('DATABASE_NAME')}")
-print(f"DATABASE_TEST_NAME: {os.getenv('DATABASE_TEST_NAME')}")
 
 def create_app():
     app = Flask(__name__)
@@ -83,6 +81,9 @@ def create_app():
 
 
 def create_database(app):
+    
+    print(DATABASE_NAME)
+    print(DATABASE_TEST_NAME)
     with app.app_context():
         if app.config['TESTING']:
             db_path = path.join('website', DATABASE_TEST_NAME)
