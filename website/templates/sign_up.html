@@ -12,6 +12,7 @@
             id="email"
             name="email"
             placeholder="Enter email"
+            maxlength="150"
             required
         />
     </div>
@@ -23,6 +24,7 @@
             id="firstName"
             name="firstName"
             placeholder="Enter first name"
+            maxlength="150"
             required
         />
     </div>
@@ -34,6 +36,7 @@
             id="lastName"
             name="lastName"
             placeholder="Enter last name"
+            maxlength="150"
             required
         />
     </div>
@@ -45,6 +48,7 @@
             id="address"
             name="address"
             placeholder="Enter address"
+            maxlength="150"
             required
         />
     </div>
@@ -71,7 +75,7 @@
             name="password1"
             placeholder="Enter password"
             required
-            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}"
+            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,150}"
             title="Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one digit, and one special character."
         />
     </div>
@@ -84,7 +88,7 @@
             name="password2"
             placeholder="Confirm password"
             required
-            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}"
+            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,150}"
             title="Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one digit, and one special character."
         />
     </div>
@@ -95,18 +99,33 @@
 <!-- Client-side validation and sanitization -->
 <script>
   document.getElementById('signupForm').addEventListener('submit', function(event) {
+    var email = document.getElementById('email').value;
     var firstName = document.getElementById('firstName').value;
     var lastName = document.getElementById('lastName').value;
+    var address = document.getElementById('address').value;
     var contact = document.getElementById('contact').value;
     var password1 = document.getElementById('password1').value;
     var password2 = document.getElementById('password2').value;
-    var nameRegex = /^[A-Za-z]+$/;
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    var nameRegex = /^[A-Za-z]{1,150}$/;
     var contactRegex = /^\d{8}$/;
-    var passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    var passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,150}$/;
 
-    // Sanitize first and last names
-    if (!nameRegex.test(firstName) || !nameRegex.test(lastName)) {
-      alert('Names should only contain letters.');
+    // Validate email
+    if (!emailRegex.test(email)) {
+      alert('Please enter a valid email address.');
+      event.preventDefault(); // Prevent form submission
+    }
+
+    // Sanitize and validate first and last names
+    else if (!nameRegex.test(firstName) || !nameRegex.test(lastName)) {
+      alert('Names should only contain letters and be less than 150 characters.');
+      event.preventDefault(); // Prevent form submission
+    }
+
+    // Sanitize and validate address
+    else if (address.length > 150) {
+      alert('Address should be less than 150 characters.');
       event.preventDefault(); // Prevent form submission
     }
 
