@@ -738,40 +738,46 @@ def remove_from_cart(product_id):
 
     return redirect(url_for('views.cart'))
 
+
 @views.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     token_obj = PasswordResetToken.query.filter_by(token=token).first()
 
     if token_obj and not token_obj.is_expired():
         if request.method == 'POST':
+
             # Retrieve the new password from the form
             new_password = request.form.get('new_password')
 
             # Validate the new password
-            if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=])[A-Za-z\d@#$%^&+=]{8,}$', new_password):
-                flash('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.', 'danger')
+            if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', new_password):
+                flash(
+                    'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+                    'danger')
                 return render_template('reset_password.html')
 
             # Update the user's password (assuming you have a user_id associated with the token)
             user_id = token_obj.user_id
             user = Login.query.filter_by(id=user_id).first()
-            
+
             if user:
                 # Update the user's password in the database
-                user.password = bcrypt.generate_password_hash(new_password)  # You need to implement a password hashing function
+                user.password = bcrypt.generate_password_hash(
+                    new_password)  # Ensure bcrypt is correctly installed and imported
                 db.session.commit()
-                
+
                 # Delete the used token
                 db.session.delete(token_obj)
                 db.session.commit()
-                
+
                 flash('Your password has been reset. You can now log in with your new password.', 'success')
                 return redirect(url_for('auth.login'))
-        
+
         return render_template('reset_password.html')
     else:
         flash('This password reset link is invalid or has expired.', 'danger')
         return redirect(url_for('auth.login'))
+
 
 @views.route('/request_password_reset', methods=['GET', 'POST'])
 def request_password_reset():
