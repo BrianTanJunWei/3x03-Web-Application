@@ -213,6 +213,7 @@ def generate_pdf_content():
 
     return send_file(buffer, as_attachment=True, download_name='generated_pdf.pdf', mimetype='application/pdf')
 
+
 @views.route('/add_product', methods=['POST'])
 def add_product():
     account_status = (current_user.account_type)
@@ -239,7 +240,11 @@ def add_product():
             flash('Invalid price.', 'error')
             return redirect(url_for('views.add_product_form'))
 
-        if image_file and allowed_file(image_file.filename):
+        if image_file:
+            if not allowed_file(image_file.filename):
+                flash('Invalid image format. Allowed types: png, jpg, jpeg.', 'error')
+                return redirect(url_for('views.add_product_form'))
+
             # Check if the image size is within the limit
             image_file.seek(0, os.SEEK_END)
             image_size = image_file.tell()
@@ -250,7 +255,7 @@ def add_product():
             image_file.seek(0)
             filename = secure_filename(image_file.filename)
         else:
-            flash('Invalid image format. Allowed types: png, jpg, jpeg.', 'error')
+            flash('No image file provided.', 'error')
             return redirect(url_for('views.add_product_form'))
 
         # Create a new product
@@ -351,7 +356,11 @@ def edit_product(product_id):
                 flash('Invalid price.', 'error')
                 return redirect(url_for('views.edit_product_form', product_id=product_id))
 
-            if new_image_file and allowed_file(new_image_file.filename):
+            if new_image_file:
+                if not allowed_file(new_image_file.filename):
+                    flash('Invalid image format. Allowed types: png, jpg, jpeg.', 'error')
+                    return redirect(url_for('views.edit_product_form', product_id=product_id))
+
                 # Check if the image size is within the limit
                 new_image_file.seek(0, os.SEEK_END)
                 image_size = new_image_file.tell()
@@ -362,7 +371,7 @@ def edit_product(product_id):
                 new_image_file.seek(0)
                 filename = secure_filename(new_image_file.filename)
             else:
-                flash('Invalid image format. Allowed types: png, jpg, jpeg.', 'error')
+                flash('No image file provided.', 'error')
                 return redirect(url_for('views.edit_product_form', product_id=product_id))
 
             # Update the product's data
