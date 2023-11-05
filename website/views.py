@@ -198,7 +198,7 @@ def generate_pdf_content():
     p.drawString(100, 750, f'Filtered Orders for Status: {filter_value}')
     y_position = 700  # Initial y-position
     for order in orders:
-        y_position -= 20  # Move down for each order
+        y_position -= 50  # Move down for each order
         p.drawString(100, y_position, f'Order ID: {order.order_id}')
         
         # Customer Details
