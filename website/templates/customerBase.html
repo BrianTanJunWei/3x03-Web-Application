@@ -42,7 +42,6 @@
             <!-- Escape the href attribute to prevent XSS -->
             <a class="nav-item nav-link" id="shop" href="{{ '/'|e }}">Shop</a>
             <a class="nav-item nav-link" id="order" href="{{ '/order'|e }}">Order</a>
-            <a class="nav-item nav-link" id="account" href="{{ '/account'|e }}">Account</a>
             <a class="nav-item nav-link" id="logout" href="{{ '/logout'|e }}">Logout</a>
             {% elif account_status == 2 %}
             <!-- Escape the href attribute to prevent XSS -->
