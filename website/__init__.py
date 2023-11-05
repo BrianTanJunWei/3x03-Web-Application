@@ -15,7 +15,8 @@ STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
 SENDINBLUE_API_KEY = os.getenv('SENDINBLUE_API_KEY')
 SENDER_EMAIL = os.getenv('SENDER_EMAIL')
 DATABASE_NAME = os.getenv('DATABASE_NAME')
-DATABASE_TEST_NAME = os.getenv('DATABASE_TEST_NAME')
+# DATABASE_TEST_NAME = os.getenv('DATABASE_TEST_NAME')
+DATABASE_TEST_NAME = 'test_db'
 
 def create_app():
     app = Flask(__name__)
