@@ -58,6 +58,7 @@ def create_app():
     def apply_csp(response):
         csp = ("default-src 'self'; "
                "script-src 'self' "
+               "'sha256-m+pWPJK/WXg1QY7IloTEfEeSdGqc7WcI7GfMyxFyXvc=' "
                "'sha256-l7zFrRVV2XIn0Noa9R/8RUgL5aErbMiOYycrLARV2WI=' "
                "'sha256-YazMb6d9LlJhtWUCUEqhr5nGeGBn8/UgnFqfXKjMvEU=' "
                "'sha256-iIwGmYnLAxqJ9aTluVaHSFy2xapfECgFhPOaHvoyiug=' "
