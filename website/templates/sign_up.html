@@ -4,7 +4,7 @@
 {% block content %}
 <h1>Sign Up</h1>
 <form id="signupForm" method="POST">
-    {{ csrf_token() }}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-group">
         <label for="email">Email Address</label>
         <input
