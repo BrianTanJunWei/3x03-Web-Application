@@ -32,6 +32,12 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def file_size_okay(file_storage):
+    file_storage.seek(0, os.SEEK_END)
+    file_size = file_storage.tell()
+    file_storage.seek(0)
+    return file_size <= MAX_IMAGE_SIZE
+
 @views.route('/')
 def home():
     products = Product.query.all()
@@ -235,7 +241,8 @@ def add_product():
 
         if image_file and allowed_file(image_file.filename):
             # Check if the image size is within the limit
-            image_size = len(image_file.read())
+            image_file.seek(0, os.SEEK_END)
+            image_size = image_file.tell()
             if image_size > MAX_IMAGE_SIZE:
                 flash('The image is too large. Please use an image smaller than 64KB.', 'error')
                 return redirect(url_for('views.add_product_form'))
@@ -346,7 +353,8 @@ def edit_product(product_id):
 
             if new_image_file and allowed_file(new_image_file.filename):
                 # Check if the image size is within the limit
-                image_size = len(new_image_file.read())
+                new_image_file.seek(0, os.SEEK_END)
+                image_size = new_image_file.tell()
                 if image_size > MAX_IMAGE_SIZE:
                     flash('The image is too large. Please use an image smaller than 64KB.', 'error')
                     return redirect(url_for('views.edit_product_form', product_id=product_id))
@@ -391,7 +399,6 @@ def edit_product(product_id):
 
     else:
         flash("You do not have the permission to modify product info!", category="error")
-
 
 # Route to account page
 @views.route('/account', methods=['GET', 'POST'])
@@ -742,31 +749,39 @@ def reset_password(token):
 
 @views.route('/request_password_reset', methods=['GET', 'POST'])
 def request_password_reset():
+
     if request.method == 'POST':
         email = request.form.get('email')
+
+        # Validate the email format
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+            flash('Invalid email address format.', 'danger')
+            return render_template('request_password_reset.html')
+
         user = Login.query.filter_by(email_address=email).first()
-        
+        user_details = UserAccounts.query.filter_by(email_address=user.email_address).first()
         if user:
-            user_details = UserAccounts.query.filter_by(email_address=user.email_address).first()
-            if user_details:
-                # Create a password reset token and save it in the database
-                token = PasswordResetToken(user_id=user.id)
-                db.session.add(token)
-                db.session.commit()
+            # Create a password reset token and save it in the database
+            token = PasswordResetToken(user_id=user.id)
+            db.session.add(token)
+            db.session.commit()
 
-                # Send an email to the user with the password reset link
-                send_password_reset_email(user_details, token.token)
+            # Send an email to the user with the password reset link
+            send_password_reset_email(user_details, token.token)
 
-                flash('An email with instructions to reset your password has been sent.', 'info')
-                return redirect(url_for('auth.login'))
-            else:
-                flash('No user details found for this email address.', 'danger')
-        else:
-            flash('No user found with this email address.', 'danger')
+            flash('An email with instructions to reset your password has been sent.', 'info')
+            return redirect(url_for('auth.login'))
+
+        flash('No user found with this email address.', 'danger')
 
     return render_template('request_password_reset.html')
 
 def send_password_reset_email(user, token):
+    # Validate the user's email and first name to ensure they contain expected data
+    if not user.email_address or not user.first_name:
+        print("Invalid user data.")
+        return
+
     # Create the email content
     email_content = f"""
     <p>Hello {user.first_name},</p>
