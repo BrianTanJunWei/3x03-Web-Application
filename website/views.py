@@ -201,8 +201,17 @@ def generate_pdf_content():
         y_position -= 20  # Move down for each order
         p.drawString(100, y_position, f'Order ID: {order.order_id}')
         
-        # Retrieve order items for the current order
+        # Customer Details
+        customer = Login.query.get(order.customer)
+        customer_details = UserAccounts.query.get(customer.email_address)
+        y_position -= 20
+        p.drawString(100, y_position, f'CUstomer Name: {customer_details.first_name} {cuscustomer_detailstomer.last_name}')
+        y_position -= 20 
+        p.drawString(100, y_position, f'Address: {customer_details.address}')
+        y_position -= 20  
+        p.drawString(100, y_position, f'Contect Number: {customer_details.contact_no}')
         
+        # Retrieve order items for the current order        
         order_items = OrderItem.query.filter_by(order_id=order.order_id).all()
         for order_item in order_items:
             product = Product.query.get(order_item.product_id)
