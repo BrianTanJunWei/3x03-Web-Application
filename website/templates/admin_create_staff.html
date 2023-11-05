@@ -5,6 +5,7 @@
 {% block content%}
 <h1>Create Staff Account</h1>
 <form method="POST" id="createStaffForm">
+    {{ csrf_token() }}
     <div class="form-group">
         <label for="email">Email Address</label>
         <input

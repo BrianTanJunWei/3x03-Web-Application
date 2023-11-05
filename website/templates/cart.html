@@ -45,6 +45,7 @@
         <td>${{ "%.2f"|format(product.price * cart_item.quantity)|e }}</td>
         <td>
           <form method="POST" action="{{ url_for('views.remove_from_cart', product_id=product.id)|e }}">
+            {{ csrf_token() }}
             <button type="submit" class="btn btn-danger">Remove</button>
           </form>
         </td>

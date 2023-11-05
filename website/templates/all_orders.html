@@ -59,6 +59,7 @@
           </div>
           <div class="modal-body">
               <form method="POST" action="{{ url_for('views.update_order_status', order_id=order.order_id) }}">
+                  {{ csrf_token() }}
 
                   <!-- Sanitize any hidden input values -->
                   <input type="hidden" name="order_id" value="{{ order.order_id | e }}">
