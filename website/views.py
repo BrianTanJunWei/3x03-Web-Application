@@ -23,6 +23,10 @@ import re
 views = Blueprint('views', __name__)
 bcrypt = Bcrypt()
 
+# Custom exception for image validation
+class ImageValidationError(Exception):
+    pass
+
 #Valid format for files to be uploaded.
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 MAX_IMAGE_SIZE = 65535
@@ -243,17 +247,11 @@ def add_product():
 
             if image_file:
                 if not allowed_file(image_file.filename):
-                    flash('Invalid image format. Allowed types: png, jpg, jpeg.', 'error')
-                    return redirect(url_for('views.add_product_form'))
+                    raise ImageValidationError('Invalid image format. Allowed types: png, jpg, jpeg.')
 
-                # Check if the image size is within the limit
-                image_file.seek(0, os.SEEK_END)
-                image_size = image_file.tell()
-                if image_size > MAX_IMAGE_SIZE:
-                    flash('The image is too large. Please use an image smaller than 64KB.', 'error')
-                    return redirect(url_for('views.add_product_form'))
-                # Reset the file pointer after reading the file
-                image_file.seek(0)
+                if not file_size_okay(image_file):
+                    raise ImageValidationError('The image is too large. Please use an image smaller than 64KB.')
+
                 filename = secure_filename(image_file.filename)
             else:
                 flash('No image file provided.', 'error')
@@ -268,8 +266,7 @@ def add_product():
             # Add the new product to the database
             db.session.add(new_product)
             db.session.commit()
-            flash(f'{new_product.name} with the price of ${new_product.price} have been added to the catalog.',
-                  'success')
+            flash(f'{new_product.name} with the price of ${new_product.price} have been added to the catalog.', 'success')
 
             # Fetch the staff member's details
             staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
@@ -291,11 +288,19 @@ def add_product():
 
             # Redirect to the shop page or wherever you want
             return redirect(url_for('views.home'))
-        except Exception as e:
-            flash(f"An error occurred: {str(e)}", category="error")
+
+        except ImageValidationError as e:
+            flash(str(e), 'error')
+            current_app.logger.error(f'Image validation error: {e}')
             return redirect(url_for('views.add_product_form'))
+
+        except Exception as e:
+            flash("An error occurred while adding the product. Please try again.", 'error')
+            current_app.logger.error(f'Unexpected error: {e}')
+            return redirect(url_for('views.add_product_form'))
+
     else:
-        flash("You do not have the permission to add product!", category="error")
+        flash("You do not have the permission to add product!", 'error')
         return redirect(url_for('views.home'))
 
 
@@ -339,7 +344,7 @@ def edit_product(product_id):
     if account_status == 1:
         product = Product.query.get(product_id)
         if not product:
-            flash("Product not found!", category="error")
+            flash("Product not found!", 'error')
             return redirect(url_for('views.home'))
 
         try:
@@ -368,17 +373,11 @@ def edit_product(product_id):
 
                 if new_image_file:
                     if not allowed_file(new_image_file.filename):
-                        flash('Invalid image format. Allowed types: png, jpg, jpeg.', 'error')
-                        return redirect(url_for('views.edit_product_form', product_id=product_id))
+                        raise ImageValidationError('Invalid image format. Allowed types: png, jpg, jpeg.')
 
-                    # Check if the image size is within the limit
-                    new_image_file.seek(0, os.SEEK_END)
-                    image_size = new_image_file.tell()
-                    if image_size > MAX_IMAGE_SIZE:
-                        flash('The image is too large. Please use an image smaller than 64KB.', 'error')
-                        return redirect(url_for('views.edit_product_form', product_id=product_id))
-                    # Reset the file pointer after reading the file
-                    new_image_file.seek(0)
+                    if not file_size_okay(new_image_file):
+                        raise ImageValidationError('The image is too large. Please use an image smaller than 64KB.')
+
                     filename = secure_filename(new_image_file.filename)
 
                 # Update the product's data
@@ -393,7 +392,7 @@ def edit_product(product_id):
 
                 # Commit the changes to the database
                 db.session.commit()
-                flash(f'{product.name} have been successfully modified.', 'success')
+                flash(f'{product.name} has been successfully modified.', 'success')
                 staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
 
                 # Create a log entry
@@ -401,7 +400,7 @@ def edit_product(product_id):
                     log_level='INFO',  # You can adjust the log level as needed
                     log_type='Edit Product',
                     entity='Product',
-                    log_desc=f'{product.name} have been successfully modified.',
+                    log_desc=f'{product.name} has been successfully modified.',
                     log_time=datetime.now(),
                     account_type=account_status,
                     account_id=current_user.email_address,
@@ -412,11 +411,19 @@ def edit_product(product_id):
                 db.session.commit()
                 # Redirect to the product's details page or wherever you want
                 return redirect(url_for('views.home', product_id=product.id))
-        except Exception as e:
-            flash(f"An error occurred: {str(e)}", category="error")
+
+        except ImageValidationError as e:
+            flash(str(e), 'error')
+            current_app.logger.error(f'Image validation error: {e}')
             return redirect(url_for('views.edit_product_form', product_id=product_id))
+
+        except Exception as e:
+            flash("An error occurred while editing the product. Please try again.", 'error')
+            current_app.logger.error(f'Unexpected error: {e}')
+            return redirect(url_for('views.edit_product_form', product_id=product_id))
+
     else:
-        flash("You do not have the permission to modify product info!", category="error")
+        flash("You do not have the permission to modify product info!", 'error')
         return redirect(url_for('views.home'))
 
 # Route to account page
