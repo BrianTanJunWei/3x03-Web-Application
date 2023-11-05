@@ -218,79 +218,85 @@ def generate_pdf_content():
 def add_product():
     account_status = (current_user.account_type)
     if account_status == 1:
-        # Get data from the request
-        name = request.form.get('name')
-        description = request.form.get('description')
-        price = request.form.get('price')
-        image_file = request.files['image']
-        is_hidden = bool(request.form.get('is_hidden'))
-
-        # Validate and sanitize inputs
-        if not name or len(name) > 100:
-            flash('Invalid product name.', 'error')
-            return redirect(url_for('views.add_product_form'))
-
-        if not description:
-            flash('Invalid product description.', 'error')
-            return redirect(url_for('views.add_product_form'))
-
         try:
-            price = float(price)
-        except ValueError:
-            flash('Invalid price.', 'error')
-            return redirect(url_for('views.add_product_form'))
+            # Get data from the request
+            name = request.form.get('name')
+            description = request.form.get('description')
+            price = request.form.get('price')
+            image_file = request.files['image']
+            is_hidden = bool(request.form.get('is_hidden'))
 
-        if image_file:
-            if not allowed_file(image_file.filename):
-                flash('Invalid image format. Allowed types: png, jpg, jpeg.', 'error')
+            # Validate and sanitize inputs
+            if not name or len(name) > 100:
+                flash('Invalid product name.', 'error')
                 return redirect(url_for('views.add_product_form'))
 
-            # Check if the image size is within the limit
-            image_file.seek(0, os.SEEK_END)
-            image_size = image_file.tell()
-            if image_size > MAX_IMAGE_SIZE:
-                flash('The image is too large. Please use an image smaller than 64KB.', 'error')
+            if not description:
+                flash('Invalid product description.', 'error')
                 return redirect(url_for('views.add_product_form'))
-            # Reset the file pointer after reading the file
-            image_file.seek(0)
-            filename = secure_filename(image_file.filename)
-        else:
-            flash('No image file provided.', 'error')
+
+            try:
+                price = float(price)
+            except ValueError:
+                flash('Invalid price.', 'error')
+                return redirect(url_for('views.add_product_form'))
+
+            if image_file:
+                if not allowed_file(image_file.filename):
+                    flash('Invalid image format. Allowed types: png, jpg, jpeg.', 'error')
+                    return redirect(url_for('views.add_product_form'))
+
+                # Check if the image size is within the limit
+                image_file.seek(0, os.SEEK_END)
+                image_size = image_file.tell()
+                if image_size > MAX_IMAGE_SIZE:
+                    flash('The image is too large. Please use an image smaller than 64KB.', 'error')
+                    return redirect(url_for('views.add_product_form'))
+                # Reset the file pointer after reading the file
+                image_file.seek(0)
+                filename = secure_filename(image_file.filename)
+            else:
+                flash('No image file provided.', 'error')
+                return redirect(url_for('views.add_product_form'))
+
+            # Create a new product
+            new_product = Product(name=name, description=description, price=price, is_hidden=is_hidden)
+
+            # Save the image
+            new_product.save_image(image_file)
+
+            # Add the new product to the database
+            db.session.add(new_product)
+            db.session.commit()
+            flash(f'{new_product.name} with the price of ${new_product.price} have been added to the catalog.',
+                  'success')
+
+            # Fetch the staff member's details
+            staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
+
+            # Create a log entry
+            log_entry = Logs(
+                log_level='INFO',  # You can adjust the log level as needed
+                log_type='Add Product',
+                entity='Products',
+                log_desc=f'{new_product.name} with the price of ${new_product.price} have been added to the catalog.',
+                log_time=datetime.now(),
+                account_type=account_status,
+                account_id=current_user.email_address,
+                affected_id=new_product.name
+            )
+
+            db.session.add(log_entry)
+            db.session.commit()
+
+            # Redirect to the shop page or wherever you want
+            return redirect(url_for('views.home'))
+        except Exception as e:
+            flash(f"An error occurred: {str(e)}", category="error")
             return redirect(url_for('views.add_product_form'))
-
-        # Create a new product
-        new_product = Product(name=name, description=description, price=price, is_hidden=is_hidden)
-
-        # Save the image
-        new_product.save_image(image_file)
-
-        # Add the new product to the database
-        db.session.add(new_product)
-        db.session.commit()
-        flash(f'{new_product.name} with the price of ${new_product.price} have been added to the catalog.', 'success')
-
-        # Fetch the staff member's details
-        staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
-
-        # Create a log entry
-        log_entry = Logs(
-            log_level='INFO',  # You can adjust the log level as needed
-            log_type='Add Product',
-            entity='Products',
-            log_desc=f'{new_product.name} with the price of ${new_product.price} have been added to the catalog.',
-            log_time=datetime.now(),
-            account_type=account_status,
-            account_id=current_user.email_address,
-            affected_id=new_product.name
-        )
-
-        db.session.add(log_entry)
-        db.session.commit()
-
-        # Redirect to the shop page or wherever you want
-        return redirect(url_for('views.home'))
     else:
         flash("You do not have the permission to add product!", category="error")
+        return redirect(url_for('views.home'))
 
 
 # @views.route('/remove_product/<int:product_id>', methods=['POST'])
@@ -332,82 +338,86 @@ def edit_product(product_id):
     account_status = (current_user.account_type)
     if account_status == 1:
         product = Product.query.get(product_id)
+        if not product:
+            flash("Product not found!", category="error")
+            return redirect(url_for('views.home'))
 
-        if request.method == 'POST':
-            # Get the updated data from the form
-            new_name = request.form.get('name')
-            new_description = request.form.get('description')
-            new_price = request.form.get('price')
-            new_image_file = request.files['image']
-            new_is_hidden = bool(request.form.get('is_hidden'))
+        try:
+            if request.method == 'POST':
+                # Get the updated data from the form
+                new_name = request.form.get('name')
+                new_description = request.form.get('description')
+                new_price = request.form.get('price')
+                new_image_file = request.files['image']
+                new_is_hidden = bool(request.form.get('is_hidden'))
 
-            # Validate and sanitize inputs
-            if not new_name or len(new_name) > 100:
-                flash('Invalid product name.', 'error')
-                return redirect(url_for('views.edit_product_form', product_id=product_id))
-
-            if not new_description:
-                flash('Invalid product description.', 'error')
-                return redirect(url_for('views.edit_product_form', product_id=product_id))
-
-            try:
-                new_price = float(new_price)
-            except ValueError:
-                flash('Invalid price.', 'error')
-                return redirect(url_for('views.edit_product_form', product_id=product_id))
-
-            if new_image_file:
-                if not allowed_file(new_image_file.filename):
-                    flash('Invalid image format. Allowed types: png, jpg, jpeg.', 'error')
+                # Validate and sanitize inputs
+                if not new_name or len(new_name) > 100:
+                    flash('Invalid product name.', 'error')
                     return redirect(url_for('views.edit_product_form', product_id=product_id))
 
-                # Check if the image size is within the limit
-                new_image_file.seek(0, os.SEEK_END)
-                image_size = new_image_file.tell()
-                if image_size > MAX_IMAGE_SIZE:
-                    flash('The image is too large. Please use an image smaller than 64KB.', 'error')
+                if not new_description:
+                    flash('Invalid product description.', 'error')
                     return redirect(url_for('views.edit_product_form', product_id=product_id))
-                # Reset the file pointer after reading the file
-                new_image_file.seek(0)
-                filename = secure_filename(new_image_file.filename)
-            else:
-                flash('No image file provided.', 'error')
-                return redirect(url_for('views.edit_product_form', product_id=product_id))
 
-            # Update the product's data
-            product.name = new_name
-            product.description = new_description
-            product.price = new_price
-            product.is_hidden = new_is_hidden
+                try:
+                    new_price = float(new_price)
+                except ValueError:
+                    flash('Invalid price.', 'error')
+                    return redirect(url_for('views.edit_product_form', product_id=product_id))
 
-            if new_image_file:
-                # Save the new image and update the product's image path
-                product.save_image(new_image_file)
+                if new_image_file:
+                    if not allowed_file(new_image_file.filename):
+                        flash('Invalid image format. Allowed types: png, jpg, jpeg.', 'error')
+                        return redirect(url_for('views.edit_product_form', product_id=product_id))
 
-            # Commit the changes to the database
-            db.session.commit()
-            flash(f'{product.name} have been successfully modified.', 'success')
-            staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
+                    # Check if the image size is within the limit
+                    new_image_file.seek(0, os.SEEK_END)
+                    image_size = new_image_file.tell()
+                    if image_size > MAX_IMAGE_SIZE:
+                        flash('The image is too large. Please use an image smaller than 64KB.', 'error')
+                        return redirect(url_for('views.edit_product_form', product_id=product_id))
+                    # Reset the file pointer after reading the file
+                    new_image_file.seek(0)
+                    filename = secure_filename(new_image_file.filename)
 
-            # Create a log entry
-            log_entry = Logs(
-                log_level='INFO',  # You can adjust the log level as needed
-                log_type='Edit Product',
-                entity='Product',
-                log_desc=f'{product.name} have been successfully modified.',
-                log_time=datetime.now(),
-                account_type=account_status,
-                account_id=current_user.email_address,
-                affected_id=product_id
-            )
+                # Update the product's data
+                product.name = new_name
+                product.description = new_description
+                product.price = new_price
+                product.is_hidden = new_is_hidden
 
-            db.session.add(log_entry)
-            db.session.commit()
-            # Redirect to the product's details page or wherever you want
-            return redirect(url_for('views.home', product_id=product.id))
+                if new_image_file:
+                    # Save the new image and update the product's image path
+                    product.save_image(new_image_file)
 
+                # Commit the changes to the database
+                db.session.commit()
+                flash(f'{product.name} have been successfully modified.', 'success')
+                staff = StaffAccounts.query.filter_by(email_address=current_user.email_address).first()
+
+                # Create a log entry
+                log_entry = Logs(
+                    log_level='INFO',  # You can adjust the log level as needed
+                    log_type='Edit Product',
+                    entity='Product',
+                    log_desc=f'{product.name} have been successfully modified.',
+                    log_time=datetime.now(),
+                    account_type=account_status,
+                    account_id=current_user.email_address,
+                    affected_id=product_id
+                )
+
+                db.session.add(log_entry)
+                db.session.commit()
+                # Redirect to the product's details page or wherever you want
+                return redirect(url_for('views.home', product_id=product.id))
+        except Exception as e:
+            flash(f"An error occurred: {str(e)}", category="error")
+            return redirect(url_for('views.edit_product_form', product_id=product_id))
     else:
         flash("You do not have the permission to modify product info!", category="error")
+        return redirect(url_for('views.home'))
 
 # Route to account page
 @views.route('/account', methods=['GET', 'POST'])
