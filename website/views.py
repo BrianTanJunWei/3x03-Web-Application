@@ -18,7 +18,6 @@ import requests
 from flask_bcrypt import Bcrypt
 from .models import Login, UserAccounts, StaffAccounts, Logs
 from html import escape
-import os
 import re
 
 views = Blueprint('views', __name__)
@@ -771,11 +770,6 @@ def request_password_reset():
     return render_template('request_password_reset.html')
 
 def send_password_reset_email(user, token):
-    # Validate the user's email and first name to ensure they contain expected data
-    if not user.email_address or not user.first_name:
-        print("Invalid user data.")
-        return
-
     # Create the email content
     email_content = f"""
     <p>Hello {user.first_name},</p>
