@@ -205,7 +205,7 @@ def generate_pdf_content():
         customer = Login.query.get(order.customer)
         customer_details = UserAccounts.query.get(customer.email_address)
         y_position -= 20
-        p.drawString(100, y_position, f'CUstomer Name: {customer_details.first_name} {customer_details.last_name}')
+        p.drawString(100, y_position, f'Customer Name: {customer_details.first_name} {customer_details.last_name}')
         y_position -= 20 
         p.drawString(100, y_position, f'Address: {customer_details.address}')
         y_position -= 20  
