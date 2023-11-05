@@ -3,33 +3,6 @@
 {% block title %}Catalog{% endblock %}
 
 {% block content %}
-
-<!-- Sanitization Script -->
-<script>
-  // Sanitize input to allow only alphanumeric characters and spaces
-  function sanitizeInput(input) {
-    return input.replace(/[^a-zA-Z0-9 ]/g, "");
-  }
-
-  // Sanitize input fields before submitting the "Add Product" form
-  document.getElementById('addProductForm').addEventListener('submit', function(event) {
-    var productName = document.getElementById('productName').value;
-    var productDescription = document.getElementById('productDescription').value;
-    document.getElementById('productName').value = sanitizeInput(productName);
-    document.getElementById('productDescription').value = sanitizeInput(productDescription);
-  });
-
-  // Sanitize input fields before submitting the "Edit Product" forms
-  {% for product in products %}
-  document.getElementById('editProductForm_{{ product.id }}').addEventListener('submit', function(event) {
-    var productName = document.getElementById('editProductName_{{ product.id }}').value;
-    var productDescription = document.getElementById('editProductDescription_{{ product.id }}').value;
-    document.getElementById('editProductName_{{ product.id }}').value = sanitizeInput(productName);
-    document.getElementById('editProductDescription_{{ product.id }}').value = sanitizeInput(productDescription);
-  });
-  {% endfor %}
-</script>
-
 <h1>Catalog</h1>
 {% if account_status == 1 %}
 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addProductModal">
@@ -51,7 +24,7 @@
         <form id="addProductForm" method="POST" action="{{ url_for('views.add_product') }}" enctype="multipart/form-data">
           <div class="form-group">
             <label for="productName">Product Name</label>
-            <input type="text" class="form-control" id="productName" name="name" required>
+            <input type="text" class="form-control" id="productName" name="name" required maxlength="100">
           </div>
           <div class="form-group">
             <label for="productDescription">Product Description</label>
@@ -59,11 +32,11 @@
           </div>
           <div class="form-group">
             <label for="productPrice">Product Price</label>
-            <input type="number" class="form-control" id="productPrice" name="price" required>
+            <input type="number" class="form-control" id="productPrice" name="price" required step="0.01">
           </div>
           <div class="form-group">
             <label for="productImage">Product Image</label>
-            <input type="file" class="form-control-file" id="productImage" name="image">
+            <input type="file" class="form-control-file" id="productImage" name="image" accept="image/png, image/jpeg">
           </div>
           <div class="form-check">
             <input type="checkbox" class="form-check-input" id="isHidden" name="is_hidden" value="1">
@@ -82,71 +55,53 @@
 <div class="row">
   {% for product in products %}
   <!-- ... existing product card code ... -->
-  <div class="col-lg-4 col-md-6 col-sm-12">
-    <a class="card-link">
-      <div class="card">
-        <img src="data:image/jpeg;base64,{{ product.image }}" class="card-img-top" alt="{{ product.name }}">
-        <div class="card-body">
-          <h5 class="card-link">{{ product.name }}</h5>
-          <p class="card-text">{{ product.description }}</p>
-          <p class="card-text">${{ "%.2f"|format(product.price) }}</p>
-
-          <!-- Edit Product Modal Trigger -->
-          {% if account_status==1 %}
-          <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editProductModal_{{ product.id }}">
-            Edit
+  <!-- Edit Product Modal Trigger -->
+  {% if account_status==1 %}
+  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editProductModal_{{ product.id }}">
+    Edit
+  </button>
+  {% endif %}
+  <!-- Edit Product Modal -->
+  <div class="modal" id="editProductModal_{{ product.id }}" tabindex="-1" role="dialog" aria-labelledby="editProductModalLabel_{{ product.id }}" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editProductModalLabel_{{ product.id }}">Edit Product</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
           </button>
-          {% endif %}
-          <a type="button" class="btn btn-primary" href="{{ url_for('views.view_product', product_id=product.id) }}">
-            View
-          </a>
-          <!-- Edit Product Modal -->
-          <div class="modal" id="editProductModal_{{ product.id }}" tabindex="-1" role="dialog" aria-labelledby="editProductModalLabel_{{ product.id }}" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="editProductModalLabel_{{ product.id }}">Edit Product</h5>
-                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                  </button>
-                </div>
-                <div class="modal-body">
-                  <!-- Form to edit the existing product -->
-                  <form id="editProductForm_{{ product.id }}" method="POST" action="{{ url_for('views.edit_product', product_id=product.id) }}" enctype="multipart/form-data">
-                    <div class="form-group">
-                      <label for="editProductName_{{ product.id }}">Product Name</label>
-                      <input type="text" class="form-control" id="editProductName_{{ product.id }}" name="name" value="{{ product.name }}" required>
-                    </div>
-                    <div class="form-group">
-                      <label for="editProductDescription_{{ product.id }}">Product Description</label>
-                      <textarea class="form-control" id="editProductDescription_{{ product.id }}" name="description">{{ product.description }}</textarea>
-                    </div>
-                    <div class="form-group">
-                      <label for="editProductPrice_{{ product.id }}">Product Price</label>
-                      <input type="number" class="form-control" id="editProductPrice_{{ product.id }}" name="price" value="{{ product.price }}" required>
-                    </div>
-                    <div class="form-group">
-                      <label for="editProductImage_{{ product.id }}">Product Image</label>
-                      <input type="file" class="form-control-file" id="editProductImage_{{ product.id }}" name="image">
-                    </div>
-                    <div class="form-check">
-                      <input type="checkbox" class="form-check-input" id="editIsHidden_{{ product.id }}" name="is_hidden" value="1" {% if product.is_hidden %}checked{% endif %}>
-                      <label class="form-check-label" for="editIsHidden_{{ product.id }}">Hide Product</label>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                  </form>
-                </div>
-              </div>
+        </div>
+        <div class="modal-body">
+          <!-- Form to edit the existing product -->
+          <form id="editProductForm_{{ product.id }}" method="POST" action="{{ url_for('views.edit_product', product_id=product.id) }}" enctype="multipart/form-data">
+            <div class="form-group">
+              <label for="editProductName_{{ product.id }}">Product Name</label>
+              <input type="text" class="form-control" id="editProductName_{{ product.id }}" name="name" value="{{ product.name }}" required maxlength="100">
             </div>
-          </div>
+            <div class="form-group">
+              <label for="editProductDescription_{{ product.id }}">Product Description</label>
+              <textarea class="form-control" id="editProductDescription_{{ product.id }}" name="description">{{ product.description }}</textarea>
+            </div>
+            <div class="form-group">
+              <label for="editProductPrice_{{ product.id }}">Product Price</label>
+              <input type="number" class="form-control" id="editProductPrice_{{ product.id }}" name="price" value="{{ product.price }}" required step="0.01">
+            </div>
+            <div class="form-group">
+              <label for="editProductImage_{{ product.id }}">Product Image</label>
+              <input type="file" class="form-control-file" id="editProductImage_{{ product.id }}" name="image" accept="image/png, image/jpeg">
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="editIsHidden_{{ product.id }}" name="is_hidden" value="1" {% if product.is_hidden %}checked{% endif %}>
+              <label class="form-check-label" for="editIsHidden_{{ product.id }}">Hide Product</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </form>
         </div>
       </div>
-    </a>
+    </div>
   </div>
   {% endfor %}
 </div>
-
-
 
 {% endblock %}
 
@@ -161,3 +116,63 @@
         integrity="sha384-e7GSk5B8iMMSlP1xMmeHYhJKPTIji1p4X7CtOg8WIz5Lm6IH9P2X4F+bpWfTEWqA"
         crossorigin="anonymous"
 ></script>
+
+<script>
+  // Front-end validation for "Add Product" form
+  document.getElementById('addProductForm').addEventListener('submit', function(event) {
+    var productName = document.getElementById('productName').value;
+    var productPrice = document.getElementById('productPrice').value;
+    var productImage = document.getElementById('productImage').files[0];
+
+    // Validate product name length
+    if (productName.length > 100) {
+      alert('Product name must be 100 characters or less.');
+      event.preventDefault();
+      return;
+    }
+
+    // Validate product price
+    if (isNaN(productPrice) || productPrice <= 0) {
+      alert('Please enter a valid price.');
+      event.preventDefault();
+      return;
+    }
+
+    // Validate product image
+    if (productImage && !['image/png', 'image/jpeg'].includes(productImage.type)) {
+      alert('Invalid image format. Allowed types: png, jpg, jpeg.');
+      event.preventDefault();
+      return;
+    }
+  });
+
+  // Front-end validation for "Edit Product" forms
+  {% for product in products %}
+  document.getElementById('editProductForm_{{ product.id }}').addEventListener('submit', function(event) {
+    var productName = document.getElementById('editProductName_{{ product.id }}').value;
+    var productPrice = document.getElementById('editProductPrice_{{ product.id }}').value;
+    var productImage = document.getElementById('editProductImage_{{ product.id }}').files[0];
+
+    // Validate product name length
+    if (productName.length > 100) {
+      alert('Product name must be 100 characters or less.');
+      event.preventDefault();
+      return;
+    }
+
+    // Validate product price
+    if (isNaN(productPrice) || productPrice <= 0) {
+      alert('Please enter a valid price.');
+      event.preventDefault();
+      return;
+    }
+
+    // Validate product image
+    if (productImage && !['image/png', 'image/jpeg'].includes(productImage.type)) {
+      alert('Invalid image format. Allowed types: png, jpg, jpeg.');
+      event.preventDefault();
+      return;
+    }
+  });
+  {% endfor %}
+</script>
