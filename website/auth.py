@@ -154,6 +154,7 @@ def sign_up():
 
             login_user(new_user_login, remember=True)  # allows user to stay logged in
 
+            
             # User Signup
             log_entry = Logs(
                 log_level='INFO',
@@ -161,9 +162,9 @@ def sign_up():
                 entity='User',
                 log_desc='User signup successfully',
                 log_time=datetime.now(),
-                account_type='null',
-                account_id='null',
-                affected_id='null'
+                account_type='2',
+                account_id=new_user_accounts.email_address,
+                affected_id=new_user_accounts.first_name
             )
             db.session.add(log_entry)
             db.session.commit()
@@ -214,9 +215,9 @@ def create_staff():
                     entity='Admin',
                     log_desc='Staff creation successfully',
                     log_time=datetime.now(),
-                    account_type='null',
-                    account_id='null',
-                    affected_id='AdminAccounts.email_address'
+                    account_type=account_status,
+                    account_id=current_user.email_address,
+                    affected_id=new_user_accounts.email_address
                 )
                 db.session.add(log_entry)
                 db.session.commit()
