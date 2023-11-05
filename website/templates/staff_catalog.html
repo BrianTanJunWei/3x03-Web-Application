@@ -42,7 +42,7 @@
             <input type="checkbox" class="form-check-input" id="isHidden" name="is_hidden" value="1">
             <label class="form-check-label" for="isHidden">Is Hidden</label>
           </div>
-          <button type="submit" class="btn btn-primary">Add Product</button>
+          <button type="submit" class="btn btn-primary" id="addProductSubmitButton">Add Product</button>
         </form>
       </div>
     </div>
@@ -103,7 +103,7 @@
                 <input type="checkbox" class="form-check-input" id="editIsHidden_{{ product.id }}" name="is_hidden" value="1" {% if product.is_hidden %}checked{% endif %}>
                 <label class="form-check-label" for="editIsHidden_{{ product.id }}">Hide Product</label>
               </div>
-              <button type="submit" class="btn btn-primary">Save Changes</button>
+              <button type="submit" class="btn btn-primary" id="editProductSubmitButton_{{ product.id }}">Save Changes</button>
             </form>
           </div>
         </div>
@@ -120,73 +120,40 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-e7GSk5B8iMMSlP1xMmeHYhJKPTIji1p4X7CtOg8WIz5Lm6IH9P2X4F+bpWfTEWqA" crossorigin="anonymous"></script>
 
 <script>
-  // Front-end validation for "Add Product" form
-  document.getElementById('addProductForm').addEventListener('submit', function(event) {
-    var productName = document.getElementById('productName').value;
-    var productPrice = document.getElementById('productPrice').value;
-    var productImage = document.getElementById('productImage').files[0];
+  // Function to check the file type and size
+  function validateFile(fileInput, submitButtonId) {
+    var file = fileInput.files[0];
+    var submitButton = document.getElementById(submitButtonId);
 
-    // Validate product name length
-    if (productName.length > 100) {
-      alert('Product name must be 100 characters or less.');
-      event.preventDefault();
-      return;
+    if (file) {
+      // Check file type
+      if (!['image/png', 'image/jpeg'].includes(file.type)) {
+        alert('Invalid image format. Allowed types: png, jpg, jpeg.');
+        submitButton.disabled = true; // Disable the submit button
+        return;
+      }
+
+      // Check file size
+      if (file.size > 65535) {
+        alert('The image is too large. Please use an image smaller than 64KB.');
+        submitButton.disabled = true; // Disable the submit button
+        return;
+      }
     }
 
-    // Validate product price
-    if (isNaN(productPrice) || productPrice <= 0) {
-      alert('Please enter a valid price.');
-      event.preventDefault();
-      return;
-    }
+    // If file is valid, enable the submit button
+    submitButton.disabled = false;
+  }
 
-    // Validate product image
-    if (productImage && !['image/png', 'image/jpeg'].includes(productImage.type)) {
-      alert('Invalid image format. Allowed types: png, jpg, jpeg.');
-      event.preventDefault();
-      return;
-    }
-
-    if (productImage && productImage.size > 65535) {
-      alert('The image is too large. Please use an image smaller than 64KB.');
-      event.preventDefault();
-      return;
-    }
+  // Event listener for "Add Product" form file input
+  document.getElementById('productImage').addEventListener('change', function() {
+    validateFile(this, 'addProductSubmitButton');
   });
 
-  // Front-end validation for "Edit Product" forms
+  // Event listener for "Edit Product" forms file inputs
   {% for product in products %}
-  document.getElementById('editProductForm_{{ product.id }}').addEventListener('submit', function(event) {
-    var productName = document.getElementById('editProductName_{{ product.id }}').value;
-    var productPrice = document.getElementById('editProductPrice_{{ product.id }}').value;
-    var productImage = document.getElementById('editProductImage_{{ product.id }}').files[0];
-
-    // Validate product name length
-    if (productName.length > 100) {
-      alert('Product name must be 100 characters or less.');
-      event.preventDefault();
-      return;
-    }
-
-    // Validate product price
-    if (isNaN(productPrice) || productPrice <= 0) {
-      alert('Please enter a valid price.');
-      event.preventDefault();
-      return;
-    }
-
-    // Validate product image
-    if (productImage && !['image/png', 'image/jpeg'].includes(productImage.type)) {
-      alert('Invalid image format. Allowed types: png, jpg, jpeg.');
-      event.preventDefault();
-      return;
-    }
-
-    if (productImage && productImage.size > 65535) {
-      alert('The image is too large. Please use an image smaller than 64KB.');
-      event.preventDefault();
-      return;
-    }
+  document.getElementById('editProductImage_{{ product.id }}').addEventListener('change', function() {
+    validateFile(this, 'editProductSubmitButton_{{ product.id }}');
   });
   {% endfor %}
 </script>
